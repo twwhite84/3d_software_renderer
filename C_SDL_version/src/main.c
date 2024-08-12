@@ -1,11 +1,11 @@
 #include <stdio.h>
 
 #include "display.h"
+#include "mesh.h"
 #include "vector.h"
 
-#define N_POINTS (9 * 9 * 9)
-vec3_t cube_points[N_POINTS];
-vec2_t projected_points[N_POINTS];
+// this holds the projected vertices for a triangle, ie 3 2D points.
+triangle_t triangles_to_render[N_MESH_FACES];
 
 vec3_t camera_position = {.x = 0, .y = 0, .z = -5};
 vec3_t cube_rotation = {.x = 0, .y = 0, .z = 0};
@@ -24,18 +24,6 @@ void setup(void) {
   colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                             SDL_TEXTUREACCESS_STREAMING,
                                             window_width, window_height);
-
-  // start loading array of vectors (point cloud)
-  // from -1 to 1 (in this 9x9x9 cube)
-  int point_count = 0;
-  for (float x = -1; x <= 1; x += 0.25) {
-    for (float y = -1; y <= 1; y += 0.25) {
-      for (float z = -1; z <= 1; z += 0.25) {
-        vec3_t new_point = {.x = x, .y = y, .z = z};
-        cube_points[point_count++] = new_point;
-      }
-    }
-  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -70,17 +58,48 @@ void update(void) {
     SDL_Delay(time_to_wait);
   }
 
-  // busy wait time delay
-  // while (!SDL_TICKS_PASSED(SDL_GetTicks(),
-                          //  previous_frame_time + FRAME_TARGET_TIME));
-
   previous_frame_time = SDL_GetTicks();
 
   cube_rotation.x += 0.01;
   cube_rotation.y += 0.01;
   cube_rotation.z += 0.01;
 
-  for (int i = 0; i < N_POINTS; i++) {
+  // loop all triangle faces of the cube mesh
+  for (int i = 0; i < N_MESH_FACES; i++) {
+    face_t mesh_face = mesh_faces[i];
+
+    vec3_t face_vertices[3];
+    // mesh_face stores its vertices one-index, so -1 to fix off by one
+    face_vertices[0] = mesh_vertices[mesh_face.a - 1];
+    face_vertices[1] = mesh_vertices[mesh_face.b - 1];
+    face_vertices[2] = mesh_vertices[mesh_face.c - 1];
+
+    // loop all three vertices of the face and apply the transform
+    triangle_t projected_triangle;
+    for (int j = 0; j < 3; j++) {
+      vec3_t transformed_vertex = face_vertices[j];
+      transformed_vertex = vec3_rotate_x(transformed_vertex, cube_rotation.x);
+      transformed_vertex = vec3_rotate_y(transformed_vertex, cube_rotation.y);
+      transformed_vertex = vec3_rotate_z(transformed_vertex, cube_rotation.z);
+
+      // translate the transformed vertex away from the camera (too zoomed in by
+      // default)
+      transformed_vertex.z -= camera_position.z;
+
+      // project the current vertex onto projection plane (i.e. our screen)
+      vec2_t projected_point = project(transformed_vertex);
+
+      // scale and translate the projected point to the middle of the screen
+      projected_point.x += (window_width / 2);
+      projected_point.y += (window_height / 2);
+      projected_triangle.points[j] = projected_point;
+    }
+
+    // save the projected triangle in the array of triangles to render
+    triangles_to_render[i] = projected_triangle;
+  }
+
+  /* for (int i = 0; i < N_POINTS; i++) {
     // fetch each point from our cube of points
     vec3_t point = cube_points[i];
 
@@ -98,7 +117,7 @@ void update(void) {
 
     // save the projected 2d vector in the array of projected points
     projected_points[i] = projected_point;
-  }
+  } */
 }
 
 /*----------------------------------------------------------------------------*/
@@ -106,11 +125,17 @@ void update(void) {
 void render(void) {
   drawGrid();
 
-  // loop thru all projected points and render them
-  for (int i = 0; i < N_POINTS; i++) {
-    vec2_t projected_point = projected_points[i];
-    drawRectangle(projected_point.x + (window_width / 2),
-                  projected_point.y + (window_height / 2), 4, 4, 0xffffff00);
+  // loop thru all the projected triangles and render them
+  for (int i = 0; i < N_MESH_FACES; i++) {
+    triangle_t triangle = triangles_to_render[i];
+
+    // for each triangle draw each vertex
+    drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xffffff00);
+    drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xffffff00);
+    drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xffffff00);
+
+    // drawRectangle(projected_point.x + (window_width / 2),
+    // projected_point.y + (window_height / 2), 4, 4, 0xffffff00);
   }
 
   renderColourBuffer();
@@ -130,8 +155,6 @@ int main(int argc, char* argv[]) {
   is_running = initialiseWindow();
 
   setup();
-
-  vec3_t myvector = {2.0, 3.0, -4.0};
 
   while (is_running) {
     processInput();
