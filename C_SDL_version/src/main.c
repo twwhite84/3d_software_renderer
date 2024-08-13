@@ -98,26 +98,6 @@ void update(void) {
     // save the projected triangle in the array of triangles to render
     triangles_to_render[i] = projected_triangle;
   }
-
-  /* for (int i = 0; i < N_POINTS; i++) {
-    // fetch each point from our cube of points
-    vec3_t point = cube_points[i];
-
-    // transform that point using cube_rotation
-    vec3_t transformed_point = vec3_rotate_x(point, cube_rotation.x);
-    transformed_point = vec3_rotate_y(transformed_point, cube_rotation.y);
-    transformed_point = vec3_rotate_z(transformed_point, cube_rotation.z);
-
-    // translate the points away from the camera (too zoomed in before...)
-    transformed_point.z -= camera_position.z;
-
-    // project(display on flat screen using perspective projection) the current
-    // point
-    vec2_t projected_point = project(transformed_point);
-
-    // save the projected 2d vector in the array of projected points
-    projected_points[i] = projected_point;
-  } */
 }
 
 /*----------------------------------------------------------------------------*/
@@ -134,20 +114,16 @@ void render(void) {
     drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xffffff00);
     drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xffffff00);
 
-    // drawRectangle(projected_point.x + (window_width / 2),
-    // projected_point.y + (window_height / 2), 4, 4, 0xffffff00);
+    // draw unfilled triangle faces
+    drawTriangle(triangle.points[0].x, triangle.points[0].y,
+                 triangle.points[1].x, triangle.points[1].y,
+                 triangle.points[2].x, triangle.points[2].y, 0xff00ff00);
   }
 
   renderColourBuffer();
   clearColourBuffer(0x00000000);
   SDL_RenderPresent(renderer);
 }
-
-// //OLD CODE FROM RENDER
-// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-// SDL_RenderClear(renderer);
-// drawPixel(20, 20, 0xffffff00);
-// drawRectangle(50, 50, 100, 200, 0xffff0000);
 
 /*----------------------------------------------------------------------------*/
 
