@@ -5,15 +5,9 @@
 #include "mesh.h"
 #include "vector.h"
 
-// this holds the projected vertices for a triangle, ie 3 2D points.
-
-// triangle_t triangles_to_render[N_MESH_FACES]; // old
-triangle_t* triangles_to_render = NULL;
-
+triangle_t* projected_triangles = NULL;
 vec3_t camera_position = {0, 0, 0};
-
 float fov_factor = 640;
-
 bool is_running = false;
 int previous_frame_time = 0;
 
@@ -28,9 +22,9 @@ void setup(void) {
                                             window_width, window_height);
 
   // loads up our single mesh (that we have for now) with cube data
-  // load_cube_mesh_data();
+  load_cube_mesh_data();
   // load_obj_file_data("./assets/f22.obj");
-  load_obj_file_data("./assets/cube.obj");
+  // load_obj_file_data("./assets/cube.obj");
 }
 
 /*----------------------------------------------------------------------------*/
@@ -45,6 +39,30 @@ void processInput(void) {
       break;
     case SDL_KEYDOWN:
       if (event.key.keysym.sym == SDLK_ESCAPE) is_running = false;
+      if (event.key.keysym.sym == SDLK_1) {
+        _render_method = RENDER_WIRE_VERTEX;
+        printf("\nRENDER_WIRE_VERTEX");
+      }
+      if (event.key.keysym.sym == SDLK_2) {
+        _render_method = RENDER_WIRE;
+        printf("\nRENDER_WIRE");
+      }
+      if (event.key.keysym.sym == SDLK_3) {
+        _render_method = RENDER_FILL_TRIANGLE;
+        printf("\nRENDER_FILL_TRIANGLE");
+      }
+      if (event.key.keysym.sym == SDLK_4) {
+        _render_method = RENDER_FILL_TRIANGLE_WIRE;
+        printf("\nRENDER_FILL_TRIANGLE_WIRE");
+      }
+      if (event.key.keysym.sym == SDLK_c) {
+        _cull_method = CULL_BACKFACE;
+        printf("\nCULL_BACKFACE");
+      }
+      if (event.key.keysym.sym == SDLK_d) {
+        _cull_method = CULL_NONE;
+        printf("\nCULL_NONE");
+      }
       break;
   }
 }
@@ -61,7 +79,7 @@ vec2_t project(vec3_t point) {
 
 void update(void) {
   // projected 2d faces
-  triangles_to_render = NULL;
+  projected_triangles = NULL;
 
   // cap the framerate
   int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
@@ -99,45 +117,54 @@ void update(void) {
     }
 
     // BACKFACE CULLING CHECK GOES HERE.
-    // 1. find vectors B-A and C-A (clockwise because we use LHCS)
-    // normalise vectors where you dont need magnitude. helps boost performance.
-    vec3_t vector_a = transformed_vertices[0]; /*   A   */
-    vec3_t vector_b = transformed_vertices[1]; /*  / \  */
-    vec3_t vector_c = transformed_vertices[2]; /* C---B */
-    vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-    vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-    vec3_normalise(&vector_ab);
-    vec3_normalise(&vector_ac);
+    if (_cull_method == CULL_BACKFACE) {
+      // 1. find vectors B-A and C-A (clockwise because we use LHCS)
+      vec3_t vector_a = transformed_vertices[0]; /*   A   */
+      vec3_t vector_b = transformed_vertices[1]; /*  / \  */
+      vec3_t vector_c = transformed_vertices[2]; /* C---B */
+      vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+      vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+      vec3_normalise(&vector_ab);
+      vec3_normalise(&vector_ac);
 
-    // 2. take their cross product and find perpendicular normal N
-    // non-commutative, so order matters
-    vec3_t normal = vec3_cross(vector_ab, vector_ac);
-    vec3_normalise(&normal);
+      // 2. take their cross product and find perpendicular normal N
+      vec3_t normal = vec3_cross(vector_ab, vector_ac);
+      vec3_normalise(&normal);
 
-    // 3. find camera ray vector by subtracting camera position - point A
-    // this will point a vector from a towards camera
-    vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+      // 3. find camera ray vector by subtracting camera position - point A
+      // this will point a vector from a towards camera
+      vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
-    // 4. take dot product between normal N and camera ray
-    // dot product is commutative, so order doesn't matter
-    float dot_normal_camera = vec3_dot(normal, camera_ray);
+      // 4. take dot product between normal N and camera ray
+      // dot product is commutative, so order doesn't matter
+      float dot_normal_camera = vec3_dot(normal, camera_ray);
 
-    // 5. if dot product < 0, dont display that face
-    if (dot_normal_camera < 0) continue;
-
-    // project (i.e. create 2D coordinates for) the vertices
-    triangle_t projected_triangle;
-    for (int j = 0; j < 3; j++) {
-      vec2_t projected_point = project(transformed_vertices[j]);
-
-      // scale and translate the projected point relative to center of window
-      projected_point.x += (window_width / 2);
-      projected_point.y += (window_height / 2);
-      projected_triangle.points[j] = projected_point;
+      // 5. if dot product < 0, dont display that face
+      if (dot_normal_camera < 0) continue;
     }
 
+    // project (i.e. create 2D coordinates for) the vertices
+    vec2_t projected_points[3];
+
+    for (int j = 0; j < 3; j++) {
+      projected_points[j] = project(transformed_vertices[j]);
+
+      // scale and translate the projected point relative to center of window
+      projected_points[j].x += (window_width / 2);
+      projected_points[j].y += (window_height / 2);
+    }
+
+    triangle_t projected_triangle = {
+        .points =
+            {
+                {.x = projected_points[0].x, .y = projected_points[0].y},
+                {.x = projected_points[1].x, .y = projected_points[1].y},
+                {.x = projected_points[2].x, .y = projected_points[2].y},
+            },
+        .colour = mesh_face.colour};
+
     // save the 2d projected version of the face
-    array_push(triangles_to_render, projected_triangle);
+    array_push(projected_triangles, projected_triangle);
   }
 }
 
@@ -147,23 +174,40 @@ void render(void) {
   drawGrid();
 
   // loop thru all the projected triangles and render them
-  int num_triangles = array_length(triangles_to_render);
+  int num_triangles = array_length(projected_triangles);
   for (int i = 0; i < num_triangles; i++) {
-    triangle_t triangle = triangles_to_render[i];
+    triangle_t triangle = projected_triangles[i];
 
     // for each triangle draw each vertex
-    drawRectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xffffff00);
-    drawRectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xffffff00);
-    drawRectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xffffff00);
+    if (_render_method == RENDER_WIRE_VERTEX) {
+      drawRectangle(triangle.points[0].x - 3, triangle.points[0].y - 3, 6, 6,
+                    0xffff0000);
+      drawRectangle(triangle.points[1].x - 3, triangle.points[1].y - 3, 6, 6,
+                    0xffff0000);
+      drawRectangle(triangle.points[2].x - 3, triangle.points[2].y - 3, 6, 6,
+                    0xffff0000);
+    }
 
-    // draw unfilled triangle faces
-    drawTriangle(triangle.points[0].x, triangle.points[0].y,
-                 triangle.points[1].x, triangle.points[1].y,
-                 triangle.points[2].x, triangle.points[2].y, 0xff00ff00);
+    // draw filled triangle faces
+    if (_render_method == RENDER_FILL_TRIANGLE ||
+        _render_method == RENDER_FILL_TRIANGLE_WIRE) {
+      drawFilledTriangle(triangle.points[0].x, triangle.points[0].y,
+                         triangle.points[1].x, triangle.points[1].y,
+                         triangle.points[2].x, triangle.points[2].y,
+                         triangle.colour);
+    }
+
+    // draw unfilled triangle faces over top (ie a wireframe overlay)
+    if (_render_method == RENDER_WIRE_VERTEX || _render_method == RENDER_WIRE ||
+        _render_method == RENDER_FILL_TRIANGLE_WIRE) {
+      drawTriangle(triangle.points[0].x, triangle.points[0].y,
+                   triangle.points[1].x, triangle.points[1].y,
+                   triangle.points[2].x, triangle.points[2].y, 0xffffffff);
+    }
   }
 
   // clear the triangle array
-  array_free(triangles_to_render);
+  array_free(projected_triangles);
 
   renderColourBuffer();
   clearColourBuffer(0x00000000);

@@ -6,6 +6,8 @@ uint32_t* colour_buffer = NULL;
 SDL_Texture* colour_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
+enum cull_method _cull_method = CULL_NONE;
+enum render_method _render_method = RENDER_WIRE;
 
 /*----------------------------------------------------------------------------*/
 
