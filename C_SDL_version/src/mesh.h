@@ -2,9 +2,9 @@
 #ifndef MESH_H
 #define MESH_H
 
+#include "display.h"
 #include "triangle.h"
 #include "vector.h"
-#include "display.h"
 
 /*----------------------------------------------------------------------------*/
 
@@ -20,9 +20,11 @@ extern face_t cube_faces[N_CUBE_FACES];
 // of a 3D object in computer graphics and computational geometry.
 
 typedef struct {
-  vec3_t* vertices;  // dynamic array of vertices
-  face_t* faces;     // dynamic array of faces
-  vec3_t rotation;   // current rotation with x,y,z values
+    vec3_t* vertices;    // dynamic array of vertices
+    face_t* faces;       // dynamic array of faces
+    vec3_t rotation;     // current rotation with x,y,z values
+    vec3_t scale;        // scale with x,y,z
+    vec3_t translation;  // translation with x,y,z
 } mesh_t;
 
 /*----------------------------------------------------------------------------*/

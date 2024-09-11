@@ -2,12 +2,16 @@
 #define VECTOR_H
 
 typedef struct {
-  float x, y;
+    float x, y;
 } vec2_t;
 
 typedef struct {
-  float x, y, z;
+    float x, y, z;
 } vec3_t;
+
+typedef struct {
+    float x, y, z, w;
+} vec4_t;
 
 /*----------------------------------------------------------------------------*/
 
@@ -31,11 +35,14 @@ vec3_t vec3_div(vec3_t v, float factor);
 vec3_t vec3_cross(vec3_t a, vec3_t b);
 void vec3_normalise(vec3_t* v);
 float vec3_dot(vec3_t a, vec3_t b);
-
-/*----------------------------------------------------------------------------*/
-
 vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);
 vec3_t vec3_rotate_z(vec3_t v, float angle);
+
+/*----------------------------------------------------------------------------*/
+
+// VECTOR CONVERSION FUNCTIONS
+vec4_t vec4_from_vec3(vec3_t v);
+vec3_t vec3_from_vec4(vec4_t v);
 
 #endif

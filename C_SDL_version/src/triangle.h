@@ -6,16 +6,16 @@
 #include "vector.h"
 
 typedef struct {
-  int a;
-  int b;
-  int c;
-  uint32_t colour;
+    int a;
+    int b;
+    int c;
+    uint32_t colour;
 } face_t;
 
 typedef struct {
-  vec2_t points[3];
-  uint32_t colour;
-  float avg_depth;
+    vec2_t points[3];
+    uint32_t colour;
+    float avg_depth;
 } triangle_t;
 
 void int_swap(int* a, int* b);
