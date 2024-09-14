@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 
 #include "array.h"
@@ -8,7 +9,7 @@
 
 triangle_t* projected_triangles = NULL;
 vec3_t camera_position = {0, 0, 0};
-float fov_factor = 640;
+mat4_t proj_matrix;
 bool is_running = false;
 int previous_frame_time = 0;
 
@@ -22,10 +23,17 @@ void setup(void) {
         renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
         window_width, window_height);
 
+    // initialise perspective projection matrix
+    float fov = 3.1415 / 3.0;  // 60 deg
+    float aspect = (float)window_height / (float)window_width;
+    float znear = 0.1;   // arbitrary
+    float zfar = 100.0;  // arbitrary
+    proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
+
     // loads up our single mesh (that we have for now) with cube data
-    load_cube_mesh_data();
+    // load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
-    // load_obj_file_data("./assets/f22.obj");
+    load_obj_file_data("./assets/f22.obj");
     // load_obj_file_data("./assets/cube.obj");
 }
 
@@ -71,14 +79,6 @@ void processInput(void) {
 
 /*----------------------------------------------------------------------------*/
 
-vec2_t project(vec3_t point) {
-    vec2_t projected_point = {.x = (fov_factor * point.x) / point.z,
-                              .y = (fov_factor * point.y) / point.z};
-    return projected_point;
-}
-
-/*----------------------------------------------------------------------------*/
-
 void update(void) {
     // projected 2d faces
     projected_triangles = NULL;
@@ -92,10 +92,11 @@ void update(void) {
     previous_frame_time = SDL_GetTicks();
 
     // our transformation will be a rotation
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.01;
+    // mesh.rotation.x += 0.01;
+    mesh.rotation.x = 225*(3.1415/180);
+    mesh.rotation.y += 0.02;
     // mesh.rotation.x = 3.1415;
-    mesh.rotation.z += 0.01;
+    // mesh.rotation.z += 0.01;
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
     // mesh.translation.x += 0.01;
@@ -185,16 +186,19 @@ void update(void) {
         }
 
         // project (i.e. create 2D coordinates for) the vertices
-        vec2_t projected_points[3];
+        vec4_t projected_points[3];
 
         for (int j = 0; j < 3; j++) {
             projected_points[j] =
-                project(vec3_from_vec4(transformed_vertices[j]));
+                mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
 
-            // scale and translate the projected point relative to center of
-            // window
-            projected_points[j].x += (window_width / 2);
-            projected_points[j].y += (window_height / 2);
+            // scale into the viewport
+            projected_points[j].x *= (window_width / 2.0);
+            projected_points[j].y *= (window_height / 2.0);
+
+            // translate the projected point relative to center of window
+            projected_points[j].x += (window_width / 2.0);
+            projected_points[j].y += (window_height / 2.0);
         }
 
         // calculate mean face depth for each face based on post-transform z
