@@ -3,19 +3,16 @@
 
 #include "array.h"
 #include "display.h"
+#include "light.h"
 #include "matrix.h"
 #include "mesh.h"
 #include "vector.h"
 
 triangle_t* projected_triangles = NULL;
-vec3_t camera_position = {0, 0, 0};
-mat4_t proj_matrix;
 bool is_running = false;
 int previous_frame_time = 0;
-
-vec3_t light_global = {0, 0, -1};
-float dot_normal_light = 1.0;
-uint32_t light_apply_intensity(uint32_t original_colour, float percentage);
+vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
+mat4_t proj_matrix;
 
 /*----------------------------------------------------------------------------*/
 
@@ -35,9 +32,9 @@ void setup(void) {
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
     // loads up our single mesh (that we have for now) with cube data
-    load_cube_mesh_data();
+    // load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
-    // load_obj_file_data("./assets/f22.obj");
+    load_obj_file_data("./assets/f22.obj");
     // load_obj_file_data("./assets/cube.obj");
 }
 
@@ -96,11 +93,10 @@ void update(void) {
     previous_frame_time = SDL_GetTicks();
 
     // our transformation will be a rotation
-    // mesh.rotation.x += 0.01;
-    mesh.rotation.x = 225 * (3.1415 / 180);
-    mesh.rotation.y += 0.02;
-    // mesh.rotation.x = 3.1415;
-    // mesh.rotation.z += 0.01;
+    mesh.rotation.x += 0.02;
+    // mesh.rotation.x = 3.1415 + (3.1415 / 4);
+    // mesh.rotation.y += 0.02;
+    // mesh.rotation.z += 0.02;
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
     // mesh.translation.x += 0.01;
@@ -134,7 +130,8 @@ void update(void) {
         for (int j = 0; j < 3; j++) {
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-            // create a world matrix
+            // create a "world matrix" that combines transforms.
+            // translation must follow rotation and scale
             mat4_t world_matrix = mat4_identity();
             world_matrix = mat4_mul_mat4(world_matrix, scale_matrix);
             world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
@@ -149,35 +146,36 @@ void update(void) {
         }
 
         // BACKFACE CULLING CHECK GOES HERE.
+
+        // 1. find vectors B-A and C-A (clockwise because we use LHCS)
+        /*    A    */
+        /*   / \   */
+        /*  C---B  */
+        vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
+        vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
+        vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalise(&vector_ab);
+        vec3_normalise(&vector_ac);
+
+        // 2. take their cross product and find perpendicular normal N
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+        vec3_normalise(&normal);
+
+        // 3. find camera ray vector by subtracting camera position - point
+        // A this will point a vector from a towards camera
+        vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+
+        // 4. take dot product between normal N and camera ray
+        // dot product is commutative, so order doesn't matter
+        float dot_normal_camera = vec3_dot(normal, camera_ray);
+
+        // experimental flat shading stuff
+        // vec3_normalise(&light_global);
+        // dot_normal_light = vec3_dot(normal, light_global);
+
         if (_cull_method == CULL_BACKFACE) {
-            // 1. find vectors B-A and C-A (clockwise because we use LHCS)
-            /*    A    */
-            /*   / \   */
-            /*  C---B  */
-            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
-            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
-            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
-            vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-            vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-            vec3_normalise(&vector_ab);
-            vec3_normalise(&vector_ac);
-
-            // 2. take their cross product and find perpendicular normal N
-            vec3_t normal = vec3_cross(vector_ab, vector_ac);
-            vec3_normalise(&normal);
-
-            // 3. find camera ray vector by subtracting camera position - point
-            // A this will point a vector from a towards camera
-            vec3_t camera_ray = vec3_sub(camera_position, vector_a);
-
-            // 4. take dot product between normal N and camera ray
-            // dot product is commutative, so order doesn't matter
-            float dot_normal_camera = vec3_dot(normal, camera_ray);
-
-            // experimental flat shading stuff
-            vec3_normalise(&light_global);
-            dot_normal_light = vec3_dot(normal, light_global);
-
             // 5. if dot product < 0, dont display that face
             if (dot_normal_camera < 0) continue;
         }
@@ -193,6 +191,9 @@ void update(void) {
             projected_points[j].x *= (window_width / 2.0);
             projected_points[j].y *= (window_height / 2.0);
 
+            // account for differing y-axis orientation
+            projected_points[j].y *= -1;
+
             // translate the projected point relative to center of window
             projected_points[j].x += (window_width / 2.0);
             projected_points[j].y += (window_height / 2.0);
@@ -205,6 +206,11 @@ void update(void) {
              transformed_vertices[2].z) /
             3.0;
 
+        float light_intensity_factor = -vec3_dot(normal, light.direction);
+
+        uint32_t triangle_colour =
+            light_apply_intensity(mesh_face.colour, light_intensity_factor);
+
         triangle_t projected_triangle = {
             .points =
                 {
@@ -212,8 +218,7 @@ void update(void) {
                     {.x = projected_points[1].x, .y = projected_points[1].y},
                     {.x = projected_points[2].x, .y = projected_points[2].y},
                 },
-            // .colour = mesh_face.colour,
-            .colour = light_apply_intensity(mesh_face.colour, dot_normal_light),
+            .colour = triangle_colour,
             .avg_depth = avg_depth,
         };
 
@@ -235,17 +240,6 @@ void update(void) {
             }
         }
     }
-}
-
-/*----------------------------------------------------------------------------*/
-
-uint32_t light_apply_intensity(uint32_t original_colour, float percentage) {
-    uint32_t a = ((original_colour & 0xff000000) >> 24) * percentage;
-    uint32_t r = ((original_colour & 0x00ff0000) >> 16) * percentage;
-    uint32_t g = ((original_colour & 0x0000ff00) >> 8) * percentage;
-    uint32_t b = (original_colour & 0x000000ff) * percentage;
-    uint32_t new_colour = (a << 24) + (r << 16) + (g << 8) + (b);
-    return new_colour;
 }
 
 /*----------------------------------------------------------------------------*/

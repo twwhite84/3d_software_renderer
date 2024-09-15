@@ -15,6 +15,7 @@
 #define CYAN 0xff00ffff
 #define YELLOW 0xffffff00
 #define MAGENTA 0xffff00ff
+#define WHITE 0xffffffff
 
 enum cull_method { CULL_NONE, CULL_BACKFACE };
 enum render_method {

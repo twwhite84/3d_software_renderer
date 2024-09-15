@@ -25,23 +25,23 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 
 face_t cube_faces[N_CUBE_FACES] = {
     // front
-    {.a = 1, .b = 2, .c = 3, .colour = RED},
-    {.a = 1, .b = 3, .c = 4, .colour = RED},
+    {.a = 1, .b = 2, .c = 3, .colour = WHITE},
+    {.a = 1, .b = 3, .c = 4, .colour = WHITE},
     // right
-    {.a = 4, .b = 3, .c = 5, .colour = GREEN},
-    {.a = 4, .b = 5, .c = 6, .colour = GREEN},
+    {.a = 4, .b = 3, .c = 5, .colour = WHITE},
+    {.a = 4, .b = 5, .c = 6, .colour = WHITE},
     // back
-    {.a = 6, .b = 5, .c = 7, .colour = BLUE},
-    {.a = 6, .b = 7, .c = 8, .colour = BLUE},
+    {.a = 6, .b = 5, .c = 7, .colour = WHITE},
+    {.a = 6, .b = 7, .c = 8, .colour = WHITE},
     // left
-    {.a = 8, .b = 7, .c = 2, .colour = YELLOW},
-    {.a = 8, .b = 2, .c = 1, .colour = YELLOW},
+    {.a = 8, .b = 7, .c = 2, .colour = WHITE},
+    {.a = 8, .b = 2, .c = 1, .colour = WHITE},
     // top
-    {.a = 2, .b = 7, .c = 5, .colour = MAGENTA},
-    {.a = 2, .b = 5, .c = 3, .colour = MAGENTA},
+    {.a = 2, .b = 7, .c = 5, .colour = WHITE},
+    {.a = 2, .b = 5, .c = 3, .colour = WHITE},
     // bottom
-    {.a = 6, .b = 8, .c = 1, .colour = CYAN},
-    {.a = 6, .b = 1, .c = 4, .colour = CYAN},
+    {.a = 6, .b = 8, .c = 1, .colour = WHITE},
+    {.a = 6, .b = 1, .c = 4, .colour = WHITE},
 };
 
 void load_cube_mesh_data(void) {
@@ -95,7 +95,7 @@ void load_obj_file_data(char *filename) {
                 printf("a: %d ", a);
                 printf("b: %d ", b);
                 printf("c: %d\n", c);
-                face_t cube_face = {.a = a, .b = b, .c = c};
+                face_t cube_face = {.a = a, .b = b, .c = c, .colour = WHITE};
                 array_push(mesh.faces, cube_face);
             }
         }
