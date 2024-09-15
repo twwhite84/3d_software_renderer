@@ -13,6 +13,10 @@ mat4_t proj_matrix;
 bool is_running = false;
 int previous_frame_time = 0;
 
+vec3_t light_global = {0, 0, -1};
+float dot_normal_light = 1.0;
+uint32_t light_apply_intensity(uint32_t original_colour, float percentage);
+
 /*----------------------------------------------------------------------------*/
 
 void setup(void) {
@@ -31,9 +35,9 @@ void setup(void) {
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
     // loads up our single mesh (that we have for now) with cube data
-    // load_cube_mesh_data();
+    load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
-    load_obj_file_data("./assets/f22.obj");
+    // load_obj_file_data("./assets/f22.obj");
     // load_obj_file_data("./assets/cube.obj");
 }
 
@@ -93,7 +97,7 @@ void update(void) {
 
     // our transformation will be a rotation
     // mesh.rotation.x += 0.01;
-    mesh.rotation.x = 225*(3.1415/180);
+    mesh.rotation.x = 225 * (3.1415 / 180);
     mesh.rotation.y += 0.02;
     // mesh.rotation.x = 3.1415;
     // mesh.rotation.z += 0.01;
@@ -141,17 +145,6 @@ void update(void) {
             transformed_vertex =
                 mat4_mul_vec4(world_matrix, transformed_vertex);
 
-            // transformed_vertex =
-            //     mat4_mul_vec4(scale_matrix, transformed_vertex);
-            // transformed_vertex =
-            //     mat4_mul_vec4(rotation_matrix_x, transformed_vertex);
-            // transformed_vertex =
-            //     mat4_mul_vec4(rotation_matrix_y, transformed_vertex);
-            // transformed_vertex =
-            //     mat4_mul_vec4(rotation_matrix_z, transformed_vertex);
-            // transformed_vertex =
-            //     mat4_mul_vec4(translation_matrix, transformed_vertex);
-
             transformed_vertices[j] = transformed_vertex;
         }
 
@@ -180,6 +173,10 @@ void update(void) {
             // 4. take dot product between normal N and camera ray
             // dot product is commutative, so order doesn't matter
             float dot_normal_camera = vec3_dot(normal, camera_ray);
+
+            // experimental flat shading stuff
+            vec3_normalise(&light_global);
+            dot_normal_light = vec3_dot(normal, light_global);
 
             // 5. if dot product < 0, dont display that face
             if (dot_normal_camera < 0) continue;
@@ -215,7 +212,8 @@ void update(void) {
                     {.x = projected_points[1].x, .y = projected_points[1].y},
                     {.x = projected_points[2].x, .y = projected_points[2].y},
                 },
-            .colour = mesh_face.colour,
+            // .colour = mesh_face.colour,
+            .colour = light_apply_intensity(mesh_face.colour, dot_normal_light),
             .avg_depth = avg_depth,
         };
 
@@ -237,6 +235,17 @@ void update(void) {
             }
         }
     }
+}
+
+/*----------------------------------------------------------------------------*/
+
+uint32_t light_apply_intensity(uint32_t original_colour, float percentage) {
+    uint32_t a = ((original_colour & 0xff000000) >> 24) * percentage;
+    uint32_t r = ((original_colour & 0x00ff0000) >> 16) * percentage;
+    uint32_t g = ((original_colour & 0x0000ff00) >> 8) * percentage;
+    uint32_t b = (original_colour & 0x000000ff) * percentage;
+    uint32_t new_colour = (a << 24) + (r << 16) + (g << 8) + (b);
+    return new_colour;
 }
 
 /*----------------------------------------------------------------------------*/
