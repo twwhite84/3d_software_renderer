@@ -6,6 +6,8 @@
 #include "light.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "texture.h"
+#include "triangle.h"
 #include "vector.h"
 
 triangle_t* projected_triangles = NULL;
@@ -31,10 +33,15 @@ void setup(void) {
     float zfar = 100.0;  // arbitrary
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
+    // manually load hardcoded texture data from static array
+    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    texture_width = 64;
+    texture_height = 64;
+
     // loads up our single mesh (that we have for now) with cube data
-    // load_cube_mesh_data();
+    load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
-    load_obj_file_data("./assets/f22.obj");
+    // load_obj_file_data("./assets/f22.obj");
     // load_obj_file_data("./assets/cube.obj");
 }
 
@@ -66,6 +73,14 @@ void processInput(void) {
                 _render_method = RENDER_FILL_TRIANGLE_WIRE;
                 printf("\nRENDER_FILL_TRIANGLE_WIRE");
             }
+            if (event.key.keysym.sym == SDLK_5) {
+                _render_method = RENDER_TEXTURED;
+                printf("\nRENDER_TEXTURED");
+            }
+            if (event.key.keysym.sym == SDLK_6) {
+                _render_method = RENDER_TEXTURED_WIRE;
+                printf("\nRENDER_TEXTURED_WIRE");
+            }
             if (event.key.keysym.sym == SDLK_c) {
                 _cull_method = CULL_BACKFACE;
                 printf("\nCULL_BACKFACE");
@@ -94,9 +109,10 @@ void update(void) {
 
     // our transformation will be a rotation
     mesh.rotation.x += 0.02;
-    // mesh.rotation.x = 3.1415 + (3.1415 / 4);
-    // mesh.rotation.y += 0.02;
-    // mesh.rotation.z += 0.02;
+    // mesh.rotation.x = 3.1415;
+    mesh.rotation.y += 0.02;
+    mesh.rotation.z += 0.02;
+    // mesh.rotation.z = -0.1;
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
     // mesh.translation.x += 0.01;
@@ -218,6 +234,9 @@ void update(void) {
                     {.x = projected_points[1].x, .y = projected_points[1].y},
                     {.x = projected_points[2].x, .y = projected_points[2].y},
                 },
+            .texcoords = {{mesh_face.a_uv.u, mesh_face.a_uv.v},
+                          {mesh_face.b_uv.u, mesh_face.b_uv.v},
+                          {mesh_face.c_uv.u, mesh_face.c_uv.v}},
             .colour = triangle_colour,
             .avg_depth = avg_depth,
         };
@@ -271,14 +290,26 @@ void render(void) {
                                triangle.colour);
         }
 
+        if (_render_method == RENDER_TEXTURED ||
+            _render_method == RENDER_TEXTURED_WIRE) {
+            drawTexturedTriangle(triangle.points[0].x, triangle.points[0].y,
+                                 triangle.texcoords[0].u,
+                                 triangle.texcoords[0].v, triangle.points[1].x,
+                                 triangle.points[1].y, triangle.texcoords[1].u,
+                                 triangle.texcoords[1].v, triangle.points[2].x,
+                                 triangle.points[2].y, triangle.texcoords[2].u,
+                                 triangle.texcoords[2].v, mesh_texture);
+        }
+
         // draw unfilled triangle faces over top (ie a wireframe overlay)
         if (_render_method == RENDER_WIRE_VERTEX ||
             _render_method == RENDER_WIRE ||
-            _render_method == RENDER_FILL_TRIANGLE_WIRE) {
+            _render_method == RENDER_FILL_TRIANGLE_WIRE ||
+            _render_method == RENDER_TEXTURED_WIRE) {
             drawTriangle(triangle.points[0].x, triangle.points[0].y,
                          triangle.points[1].x, triangle.points[1].y,
                          triangle.points[2].x, triangle.points[2].y,
-                         0xffffffff);
+                         WHITE);
         }
     }
 
