@@ -2,6 +2,7 @@
     "makefile.makePath": "mingw32-make",
     "files.associations": {
         "cstdlib": "c",
-        "mesh.h": "c"
+        "mesh.h": "c",
+        "vector.h": "c"
     }
 }
