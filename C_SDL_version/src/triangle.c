@@ -76,11 +76,8 @@ void drawFilledTriangle(int x0, int y0, int x1, int y1, int x2, int y2,
 }
 
 // draw textured pixel at (x, y) via interpolation
-void drawTexel(
-    int x, int y, uint32_t* texture, 
-    vec4_t point_a, vec4_t point_b, vec4_t point_c, 
-    tex2_t a_uv, tex2_t b_uv, tex2_t c_uv
-) {
+void drawTexel(int x, int y, uint32_t* texture, vec4_t point_a, vec4_t point_b,
+               vec4_t point_c, tex2_t a_uv, tex2_t b_uv, tex2_t c_uv) {
     vec2_t p = {x, y};
     vec2_t a = vec2_from_vec4(point_a);
     vec2_t b = vec2_from_vec4(point_b);
@@ -94,32 +91,35 @@ void drawTexel(
     float interp_u, interp_v;
     float interp_recp_w;
 
-    // perform interpolation of all U/w, V/w values using barycentrism with factor of 1/w
-    interp_u = (a_uv.u/point_a.w) * alpha + (b_uv.u/point_b.w) * beta + (c_uv.u/point_c.w) * gamma;
-    interp_v = (a_uv.v/point_a.w) * alpha + (b_uv.v/point_b.w) * beta + (c_uv.v/point_c.w) * gamma;
+    // perform interpolation of all U/w, V/w values using barycentrism with
+    // factor of 1/w
+    interp_u = (a_uv.u / point_a.w) * alpha + (b_uv.u / point_b.w) * beta +
+               (c_uv.u / point_c.w) * gamma;
+    interp_v = (a_uv.v / point_a.w) * alpha + (b_uv.v / point_b.w) * beta +
+               (c_uv.v / point_c.w) * gamma;
 
     // interpolate 1/w for the current pixel
-    interp_recp_w = (1/point_a.w) * alpha + (1/point_b.w) * beta + (1/point_c.w) * gamma;
+    interp_recp_w = (1 / point_a.w) * alpha + (1 / point_b.w) * beta +
+                    (1 / point_c.w) * gamma;
 
     // divide all attributes by reciprocal to undo the perspective transform
     interp_u /= interp_recp_w;
     interp_v /= interp_recp_w;
 
-    // map the UV coordinate to full texture width and height
-    int tex_x = abs((int)(interp_u * texture_width));
-    int tex_y = abs((int)(interp_v * texture_height));
+    // map the UV coordinate to full texture width and height. 
+    // use of modulus to prevent out of range errors
+    int tex_x = abs((int)(interp_u * texture_width)) % texture_width;
+    int tex_y = abs((int)(interp_v * texture_height)) % texture_height;
 
     if (tex_x < texture_width && tex_y < texture_height) {
         drawPixel(x, y, texture[(texture_width * tex_y) + tex_x]);
     }
 }
 
-void drawTexturedTriangle(
-    int x0, int y0, float z0, float w0, float u0, float v0,
-    int x1, int y1, float z1, float w1, float u1, float v1,
-    int x2, int y2, float z2, float w2, float u2, float v2,
-    uint32_t* texture
-) {
+void drawTexturedTriangle(int x0, int y0, float z0, float w0, float u0,
+                          float v0, int x1, int y1, float z1, float w1,
+                          float u1, float v1, int x2, int y2, float z2,
+                          float w2, float u2, float v2, uint32_t* texture) {
     // first sort the vertices by y coordinates ascending (y0 < y1 < y2)
     if (y0 > y1) {
         int_swap(&y0, &y1);
@@ -148,14 +148,18 @@ void drawTexturedTriangle(
         float_swap(&v0, &v1);
     }
 
+    // texture coordinates are mirrored, so get inverse
+    v0 = 1.0 - v0;
+    v1 = 1.0 - v1;
+    v2 = 1.0 - v2;
+
     // create vector points
     vec4_t point_a = {x0, y0, z0, w0};
     vec4_t point_b = {x1, y1, z1, w1};
     vec4_t point_c = {x2, y2, z2, w2};
-    tex2_t a_uv = { u0, v0 };
-    tex2_t b_uv = { u1, v1 };
-    tex2_t c_uv = { u2, v2 };
-
+    tex2_t a_uv = {u0, v0};
+    tex2_t b_uv = {u1, v1};
+    tex2_t c_uv = {u2, v2};
 
     // render flat bottom (upper split of triangle)
     // using m = delta_x/delta_y because we want f(y)=x basically
@@ -180,7 +184,8 @@ void drawTexturedTriangle(
                 // drawPixel(x, y, (x % 2 == 0 && y % 2 == 0 ? RED :
                 // 0x00000000));
 
-                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv,
+                          c_uv);
             }
         }
     }
@@ -207,7 +212,8 @@ void drawTexturedTriangle(
                 // drawPixel(x, y, (x % 2 == 0 && y % 2 == 0 ? RED :
                 // 0x00000000));
 
-                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
+                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv,
+                          c_uv);
             }
         }
     }

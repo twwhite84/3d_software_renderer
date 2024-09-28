@@ -40,13 +40,14 @@ void setup(void) {
     // texture_height = 64;
 
     // loads up our single mesh (that we have for now) with cube data
-    load_cube_mesh_data();
+    // load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
-    // load_obj_file_data("./assets/f22.obj");
+    load_obj_file_data("./assets/crab.obj");
     // load_obj_file_data("./assets/cube.obj");
 
     // load texture
-    loadPNGTexture("./assets/cube.png");
+    // loadPNGTexture("./assets/cube.png");
+    loadPNGTexture("./assets/crab.png");
 }
 
 /*----------------------------------------------------------------------------*/

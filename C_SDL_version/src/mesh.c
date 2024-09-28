@@ -25,23 +25,95 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 
 face_t cube_faces[N_CUBE_FACES] = {
     // front
-    {.a = 1, .b = 2, .c = 3, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 1, .b = 3, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 1,
+     .b = 2,
+     .c = 3,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 1,
+     .b = 3,
+     .c = 4,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
     // right
-    {.a = 4, .b = 3, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 4, .b = 5, .c = 6, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 4,
+     .b = 3,
+     .c = 5,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 4,
+     .b = 5,
+     .c = 6,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
     // back
-    {.a = 6, .b = 5, .c = 7, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 6, .b = 7, .c = 8, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 6,
+     .b = 5,
+     .c = 7,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 6,
+     .b = 7,
+     .c = 8,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
     // left
-    {.a = 8, .b = 7, .c = 2, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 8, .b = 2, .c = 1, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 8,
+     .b = 7,
+     .c = 2,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 8,
+     .b = 2,
+     .c = 1,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
     // top
-    {.a = 2, .b = 7, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 2, .b = 5, .c = 3, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 2,
+     .b = 7,
+     .c = 5,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 2,
+     .b = 5,
+     .c = 3,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
     // bottom
-    {.a = 6, .b = 8, .c = 1, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
-    {.a = 6, .b = 1, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
+    {.a = 6,
+     .b = 8,
+     .c = 1,
+     .a_uv = {0, 1},
+     .b_uv = {0, 0},
+     .c_uv = {1, 0},
+     .colour = WHITE},
+    {.a = 6,
+     .b = 1,
+     .c = 4,
+     .a_uv = {0, 1},
+     .b_uv = {1, 0},
+     .c_uv = {1, 1},
+     .colour = WHITE},
 };
 
 void load_cube_mesh_data(void) {
@@ -60,10 +132,13 @@ void load_obj_file_data(char *filename) {
     FILE *file = fopen(filename, "r");
     char line[256];
     char *token;
+    tex2_t *texcoords = NULL;
 
     if (file != NULL) {
         while (fgets(line, sizeof(line), file)) {
             token = strtok(line, " ");
+
+            // vertices
             if (token != NULL && strcmp(token, "v") == 0) {
                 token = strtok(NULL, " ");
                 float x = strtof(token, NULL);
@@ -79,23 +154,56 @@ void load_obj_file_data(char *filename) {
                 array_push(mesh.vertices, obj_vertex);
             }
 
+            // texture coords
+            else if (token != NULL && strcmp(token, "vt") == 0) {
+                token = strtok(NULL, " ");
+                float u = strtof(token, NULL);
+                token = strtok(NULL, " ");
+                float v = strtof(token, NULL);
+                tex2_t texcoord = {.u = u, .v = v};
+                array_push(texcoords, texcoord);
+            }
+
+            // faces
             else if (token != NULL && strcmp(token, "f") == 0) {
                 token = strtok(NULL, " /");
+
                 int a = atoi(token);
                 token = strtok(NULL, " /");
+                int a_texidx = atoi(token);
                 token = strtok(NULL, " /");
+                int a_normidx = atoi(token);
                 token = strtok(NULL, " /");
+
                 int b = atoi(token);
                 token = strtok(NULL, " /");
+                int b_texidx = atoi(token);
                 token = strtok(NULL, " /");
+                int b_normidx = atoi(token);
                 token = strtok(NULL, " /");
+
                 int c = atoi(token);
                 token = strtok(NULL, " /");
+                int c_texidx = atoi(token);
                 token = strtok(NULL, " /");
+                int c_normidx = atoi(token);
+
                 printf("a: %d ", a);
                 printf("b: %d ", b);
-                printf("c: %d\n", c);
-                face_t cube_face = {.a = a, .b = b, .c = c, .colour = WHITE};
+                printf("c: %d ", c);
+                printf("a_uv: %f,%f ", texcoords[a_texidx].u,
+                       texcoords[a_texidx].v);
+                printf("b_uv: %f,%f ", texcoords[b_texidx].u,
+                       texcoords[b_texidx].v);
+                printf("c_uv: %f,%f\n", texcoords[c_texidx].u,
+                       texcoords[c_texidx].v);
+                face_t cube_face = {.a = a,
+                                    .b = b,
+                                    .c = c,
+                                    .a_uv = texcoords[a_texidx - 1],
+                                    .b_uv = texcoords[b_texidx - 1],
+                                    .c_uv = texcoords[c_texidx - 1],
+                                    .colour = WHITE};
                 array_push(mesh.faces, cube_face);
             }
         }
@@ -103,4 +211,5 @@ void load_obj_file_data(char *filename) {
     } else {
         fprintf(stderr, "Unable to open file!\n");
     }
+    array_free(texcoords);
 }
