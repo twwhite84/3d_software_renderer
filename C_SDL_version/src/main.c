@@ -8,6 +8,7 @@
 #include "mesh.h"
 #include "texture.h"
 #include "triangle.h"
+#include "upng.h"
 #include "vector.h"
 
 triangle_t* projected_triangles = NULL;
@@ -22,9 +23,9 @@ void setup(void) {
     colour_buffer =
         (uint32_t*)malloc(window_width * window_height * sizeof(uint32_t));
 
-    colour_buffer_texture = SDL_CreateTexture(
-        renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
-        window_width, window_height);
+    colour_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
+                                              SDL_TEXTUREACCESS_STREAMING,
+                                              window_width, window_height);
 
     // initialise perspective projection matrix
     float fov = 3.1415 / 3.0;  // 60 deg
@@ -34,15 +35,18 @@ void setup(void) {
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
     // manually load hardcoded texture data from static array
-    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-    texture_width = 64;
-    texture_height = 64;
+    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    // texture_width = 64;
+    // texture_height = 64;
 
     // loads up our single mesh (that we have for now) with cube data
     load_cube_mesh_data();
     // load_obj_file_data("./assets/tank.obj");
     // load_obj_file_data("./assets/f22.obj");
     // load_obj_file_data("./assets/cube.obj");
+
+    // load texture
+    loadPNGTexture("./assets/cube.png");
 }
 
 /*----------------------------------------------------------------------------*/
@@ -228,12 +232,18 @@ void update(void) {
             light_apply_intensity(mesh_face.colour, light_intensity_factor);
 
         triangle_t projected_triangle = {
-            .points =
-                {
-                    {.x = projected_points[0].x, .y = projected_points[0].y, .z = projected_points[0].z, .w = projected_points[0].w},
-                    {.x = projected_points[1].x, .y = projected_points[1].y, .z = projected_points[1].z, .w = projected_points[1].w},
-                    {.x = projected_points[2].x, .y = projected_points[2].y, .z = projected_points[2].z, .w = projected_points[2].w}
-                },
+            .points = {{.x = projected_points[0].x,
+                        .y = projected_points[0].y,
+                        .z = projected_points[0].z,
+                        .w = projected_points[0].w},
+                       {.x = projected_points[1].x,
+                        .y = projected_points[1].y,
+                        .z = projected_points[1].z,
+                        .w = projected_points[1].w},
+                       {.x = projected_points[2].x,
+                        .y = projected_points[2].y,
+                        .z = projected_points[2].z,
+                        .w = projected_points[2].w}},
             .texcoords = {{mesh_face.a_uv.u, mesh_face.a_uv.v},
                           {mesh_face.b_uv.u, mesh_face.b_uv.v},
                           {mesh_face.c_uv.u, mesh_face.c_uv.v}},
@@ -292,10 +302,16 @@ void render(void) {
 
         if (_render_method == RENDER_TEXTURED ||
             _render_method == RENDER_TEXTURED_WIRE) {
-            drawTexturedTriangle(
-                triangle.points[0].x, triangle.points[0].y, triangle.points[0].z, triangle.points[0].w, triangle.texcoords[0].u, triangle.texcoords[0].v,
-                triangle.points[1].x, triangle.points[1].y, triangle.points[1].z, triangle.points[1].w, triangle.texcoords[1].u, triangle.texcoords[1].v, 
-                triangle.points[2].x, triangle.points[2].y, triangle.points[2].z, triangle.points[2].w, triangle.texcoords[2].u, triangle.texcoords[2].v, mesh_texture);
+            drawTexturedTriangle(triangle.points[0].x, triangle.points[0].y,
+                                 triangle.points[0].z, triangle.points[0].w,
+                                 triangle.texcoords[0].u,
+                                 triangle.texcoords[0].v, triangle.points[1].x,
+                                 triangle.points[1].y, triangle.points[1].z,
+                                 triangle.points[1].w, triangle.texcoords[1].u,
+                                 triangle.texcoords[1].v, triangle.points[2].x,
+                                 triangle.points[2].y, triangle.points[2].z,
+                                 triangle.points[2].w, triangle.texcoords[2].u,
+                                 triangle.texcoords[2].v, mesh_texture);
         }
 
         // draw unfilled triangle faces over top (ie a wireframe overlay)
@@ -305,8 +321,7 @@ void render(void) {
             _render_method == RENDER_TEXTURED_WIRE) {
             drawTriangle(triangle.points[0].x, triangle.points[0].y,
                          triangle.points[1].x, triangle.points[1].y,
-                         triangle.points[2].x, triangle.points[2].y,
-                         WHITE);
+                         triangle.points[2].x, triangle.points[2].y, WHITE);
         }
     }
 
@@ -323,6 +338,7 @@ void render(void) {
 // frees memory that was dynamically allocated
 void freeResources(void) {
     free(colour_buffer);
+    upng_free(png_texture);
     array_free(mesh.faces);
     array_free(mesh.vertices);
 }
