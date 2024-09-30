@@ -33,6 +33,7 @@ extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern uint32_t* colour_buffer;
 extern SDL_Texture* colour_buffer_texture;
+extern float* z_buffer;
 extern int window_width;
 extern int window_height;
 
@@ -46,5 +47,6 @@ void drawRectangle(int x, int y, int width, int height, uint32_t colour);
 void renderColourBuffer(void);
 void clearColourBuffer(uint32_t colour);
 void destroyWindow(void);
+void clearZBuffer(void);
 
 #endif

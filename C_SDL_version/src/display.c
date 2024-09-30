@@ -8,6 +8,7 @@ int window_width = 800;
 int window_height = 600;
 enum cull_method _cull_method = CULL_NONE;
 enum render_method _render_method = RENDER_WIRE;
+float* z_buffer = NULL;
 
 /*----------------------------------------------------------------------------*/
 
@@ -130,4 +131,14 @@ void destroyWindow(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+/*----------------------------------------------------------------------------*/
+
+void clearZBuffer(void) {
+    for (int row = 0; row < window_height; row++) {
+        for (int column = 0; column < window_width; column++) {
+            z_buffer[(window_width * row) + column] = 1.0;
+        }
+    }
 }
