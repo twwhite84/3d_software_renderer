@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "array.h"
+#include "camera.h"
 #include "display.h"
 #include "light.h"
 #include "matrix.h"
@@ -18,8 +19,11 @@ int num_triangles_to_render = 0;
 
 bool is_running = false;
 int previous_frame_time = 0;
-vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
+// vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
+mat4_t world_matrix;
 mat4_t proj_matrix;
+mat4_t view_matrix;
+float delta_time = 0;
 
 /*----------------------------------------------------------------------------*/
 
@@ -50,15 +54,15 @@ void setup(void) {
     // load_obj_file_data("./assets/tank.obj");
     // load_obj_file_data("./assets/crab.obj");
     // load_obj_file_data("./assets/f22.obj");
-    // load_obj_file_data("./assets/cube.obj");
-    load_obj_file_data("./assets/drone.obj");
+    load_obj_file_data("./assets/cube.obj");
+    // load_obj_file_data("./assets/drone.obj");
 
     // load texture
-    // loadPNGTexture("./assets/cube.png");
+    loadPNGTexture("./assets/cube.png");
     // loadPNGTexture("./assets/crab.png");
     // loadPNGTexture("./assets/f22.png");
     // loadPNGTexture("./assets/cube.png");
-    loadPNGTexture("./assets/drone.png");
+    // loadPNGTexture("./assets/drone.png");
 }
 
 /*----------------------------------------------------------------------------*/
@@ -101,9 +105,29 @@ void processInput(void) {
                 _cull_method = CULL_BACKFACE;
                 printf("\nCULL_BACKFACE");
             }
-            if (event.key.keysym.sym == SDLK_d) {
+            if (event.key.keysym.sym == SDLK_x) {
                 _cull_method = CULL_NONE;
                 printf("\nCULL_NONE");
+            }
+            if (event.key.keysym.sym == SDLK_UP) {
+                camera.position.y += 3.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_DOWN) {
+                camera.position.y -= 3.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_a) {
+                camera.yaw += 1.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_d) {
+                camera.yaw -= 1.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_w) {
+                camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+                camera.position = vec3_add(camera.position, camera.forward_velocity);
+            }
+            if (event.key.keysym.sym == SDLK_s) {
+                camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+                camera.position = vec3_sub(camera.position, camera.forward_velocity);
             }
             break;
     }
@@ -122,20 +146,40 @@ void update(void) {
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
         SDL_Delay(time_to_wait);
     }
+
+    delta_time = (SDL_GetTicks() - previous_frame_time)/1000.0;
     previous_frame_time = SDL_GetTicks();
 
     // our transformation will be a rotation
-    // mesh.rotation.x += 0.02;
-    // mesh.rotation.x = 3.1415;
-    mesh.rotation.y += 0.02;
-    // mesh.rotation.z += 0.02;
-    // mesh.rotation.z = -0.1;
+    // mesh.rotation.x += 0.06 * delta_time;
+    // mesh.rotation.y += 0.06 * delta_time;
+    // mesh.rotation.z += 0.06 * delta_time;
+    // mesh.translation.x += 1 * delta_time;
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
-    // mesh.translation.x += 0.01;
+    
     mesh.translation.z = 5.0;
 
-    // create a scale matrix that will be used to multiply the mesh vertices
+    // change camera postion each frame
+    // camera.position.x += 0.5 * delta_time;
+    // camera.position.y += 0.8 * delta_time;
+
+    // create the camera view matrix looking at a hardcoded point (For now)
+    // vec3_t target = {.x = 0, .y = 0, .z = 4.0};
+
+    // find the target
+    vec3_t target = { 0, 0, 1 }; // start with target being positive z-axis
+    mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw);
+    camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+
+    // offset the camera position in the direction camera is pointing at
+    target = vec3_add(camera.position, camera.direction);
+    vec3_t up = {0, 1, 0};  // usually it's this.
+
+    view_matrix = mat4_look_at(camera.position, target, up);
+
+
+    
     mat4_t scale_matrix =
         mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
@@ -165,7 +209,7 @@ void update(void) {
 
             // create a "world matrix" that combines transforms.
             // translation must follow rotation and scale
-            mat4_t world_matrix = mat4_identity();
+            world_matrix = mat4_identity();
             world_matrix = mat4_mul_mat4(world_matrix, scale_matrix);
             world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
             world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
@@ -174,6 +218,9 @@ void update(void) {
 
             transformed_vertex =
                 mat4_mul_vec4(world_matrix, transformed_vertex);
+
+            // multiply the vertex by view matrix to transform to camera space
+            transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
 
             transformed_vertices[j] = transformed_vertex;
         }
@@ -198,7 +245,9 @@ void update(void) {
 
         // 3. find camera ray vector by subtracting camera position - point
         // A this will point a vector from a towards camera
-        vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+        // origin is at camera position, so (0,0,0) here is relative
+        vec3_t origin = {.x = 0, .y = 0, .z = 0};
+        vec3_t camera_ray = vec3_sub(origin, vector_a);
 
         // 4. take dot product between normal N and camera ray
         // dot product is commutative, so order doesn't matter
