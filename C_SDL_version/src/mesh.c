@@ -6,11 +6,8 @@
 
 #include "array.h"
 
-mesh_t mesh = {.vertices = NULL,
-               .faces = NULL,
-               .rotation = {0, 0, 0},
-               .scale = {1.0, 1.0, 1.0},
-               .translation = {0, 0, 0}};
+mesh_t mesh = {
+    .vertices = NULL, .faces = NULL, .rotation = {0, 0, 0}, .scale = {1.0, 1.0, 1.0}, .translation = {0, 0, 0}};
 
 vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = -1},  // 1, index position for points
@@ -25,95 +22,23 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 
 face_t cube_faces[N_CUBE_FACES] = {
     // front
-    {.a = 1,
-     .b = 2,
-     .c = 3,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 1,
-     .b = 3,
-     .c = 4,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 1, .b = 2, .c = 3, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 1, .b = 3, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
     // right
-    {.a = 4,
-     .b = 3,
-     .c = 5,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 4,
-     .b = 5,
-     .c = 6,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 4, .b = 3, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 4, .b = 5, .c = 6, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
     // back
-    {.a = 6,
-     .b = 5,
-     .c = 7,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 6,
-     .b = 7,
-     .c = 8,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 6, .b = 5, .c = 7, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 6, .b = 7, .c = 8, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
     // left
-    {.a = 8,
-     .b = 7,
-     .c = 2,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 8,
-     .b = 2,
-     .c = 1,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 8, .b = 7, .c = 2, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 8, .b = 2, .c = 1, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
     // top
-    {.a = 2,
-     .b = 7,
-     .c = 5,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 2,
-     .b = 5,
-     .c = 3,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 2, .b = 7, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 2, .b = 5, .c = 3, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
     // bottom
-    {.a = 6,
-     .b = 8,
-     .c = 1,
-     .a_uv = {0, 1},
-     .b_uv = {0, 0},
-     .c_uv = {1, 0},
-     .colour = WHITE},
-    {.a = 6,
-     .b = 1,
-     .c = 4,
-     .a_uv = {0, 1},
-     .b_uv = {1, 0},
-     .c_uv = {1, 1},
-     .colour = WHITE},
+    {.a = 6, .b = 8, .c = 1, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .colour = WHITE},
+    {.a = 6, .b = 1, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .colour = WHITE},
 };
 
 void load_cube_mesh_data(void) {
@@ -191,12 +116,9 @@ void load_obj_file_data(char *filename) {
                 printf("a: %d ", a);
                 printf("b: %d ", b);
                 printf("c: %d ", c);
-                printf("a_uv: %f,%f ", texcoords[a_texidx].u,
-                       texcoords[a_texidx].v);
-                printf("b_uv: %f,%f ", texcoords[b_texidx].u,
-                       texcoords[b_texidx].v);
-                printf("c_uv: %f,%f\n", texcoords[c_texidx].u,
-                       texcoords[c_texidx].v);
+                printf("a_uv: %f,%f ", texcoords[a_texidx].u, texcoords[a_texidx].v);
+                printf("b_uv: %f,%f ", texcoords[b_texidx].u, texcoords[b_texidx].v);
+                printf("c_uv: %f,%f\n", texcoords[c_texidx].u, texcoords[c_texidx].v);
                 face_t cube_face = {.a = a,
                                     .b = b,
                                     .c = c,

@@ -22,9 +22,8 @@ bool initialiseWindow(void) {
     SDL_GetCurrentDisplayMode(0, &display_mode);
 
     // Create a SDL Window
-    window =
-        SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         window_width, window_height, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height,
+                              SDL_WINDOW_RESIZABLE);
     if (!window) {
         fprintf(stderr, "Error creating SDL window.\n");
         return false;
@@ -70,8 +69,7 @@ void drawLine(int x0, int y0, int x1, int y1, uint32_t colour) {
     int delta_x = (x1 - x0);
     int delta_y = (y1 - y0);
 
-    int longest_side_length =
-        (abs(delta_x) >= abs(delta_y)) ? abs(delta_x) : abs(delta_y);
+    int longest_side_length = (abs(delta_x) >= abs(delta_y)) ? abs(delta_x) : abs(delta_y);
 
     float x_inc = delta_x / (float)longest_side_length;
     float y_inc = delta_y / (float)longest_side_length;
@@ -100,8 +98,7 @@ void drawRectangle(int x, int y, int width, int height, uint32_t colour) {
 
 /*----------------------------------------------------------------------------*/
 
-void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2,
-                  uint32_t colour) {
+void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t colour) {
     drawLine(x0, y0, x1, y1, colour);
     drawLine(x1, y1, x2, y2, colour);
     drawLine(x2, y2, x0, y0, colour);
@@ -120,8 +117,7 @@ void clearColourBuffer(uint32_t colour) {
 /*----------------------------------------------------------------------------*/
 
 void renderColourBuffer(void) {
-    SDL_UpdateTexture(colour_buffer_texture, NULL, colour_buffer,
-                      (int)window_width * sizeof(uint32_t));
+    SDL_UpdateTexture(colour_buffer_texture, NULL, colour_buffer, (int)window_width * sizeof(uint32_t));
     SDL_RenderCopy(renderer, colour_buffer_texture, NULL, NULL);
 }
 
