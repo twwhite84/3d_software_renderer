@@ -5,8 +5,7 @@
 
 /*----------------------------------------------------------------------------*/
 
-void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
-                               uint32_t colour) {
+void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t colour) {
     // (x0,y0) is top vertex; to (x1,y1) is left leg; to (x2,y2) is right leg
     float slope_left = (float)(x1 - x0) / (y1 - y0);
     float slope_right = (float)(x2 - x0) / (y2 - y0);
@@ -23,8 +22,7 @@ void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
 
 /*----------------------------------------------------------------------------*/
 
-void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
-                            uint32_t colour) {
+void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t colour) {
     // (x2,y2) is bottom vertex; to (x0,y0) is left leg; to (x1,y1) is right leg
 
     // note: doesnt appear to matter if you go x2 - x0, or x0 - x2
@@ -43,13 +41,8 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
 
 /*----------------------------------------------------------------------------*/
 
-void drawFilledTriangle(
-    int x0, int y0, float z0, float w0,
-    int x1, int y1, float z1, float w1,
-    int x2, int y2, float z2, float w2,
-    uint32_t colour
-) {
-
+void drawFilledTriangle(int x0, int y0, float z0, float w0, int x1, int y1, float z1, float w1, int x2, int y2,
+                        float z2, float w2, uint32_t colour) {
     // sort y coordinates top to bottom
     if (y0 > y1) {
         int_swap(&y0, &y1);
@@ -86,7 +79,9 @@ void drawFilledTriangle(
             int x_start = 0, x_end = 0;
             x_start = x1 + (y - y1) * inv_slope_1;
             x_end = x0 + (y - y0) * inv_slope_2;
-            if (x_end < x_start) { int_swap(&x_start, &x_end); }  // ensure x_end is on right
+            if (x_end < x_start) {
+                int_swap(&x_start, &x_end);
+            }  // ensure x_end is on right
             for (int x = x_start; x < x_end; x++) {
                 // get depth info for pixel
                 vec2_t p = {x, y};
@@ -97,9 +92,9 @@ void drawFilledTriangle(
                 float interp_recp_w = 1 - ((1 / a.w) * alpha + (1 / b.w) * beta + (1 / c.w) * gamma);
 
                 // redraw pixel if this one is closer to camera
-                if (interp_recp_w < z_buffer[(window_width * y) + x]) {
+                if (interp_recp_w < getZBufferAt(x, y)) {
                     drawPixel(x, y, colour);
-                    z_buffer[(window_width * y) + x] = interp_recp_w;
+                    setZBufferAt(x, y, interp_recp_w);
                 }
             }
         }
@@ -115,7 +110,9 @@ void drawFilledTriangle(
             int x_start = 0, x_end = 0;
             x_start = x1 + (y - y1) * inv_slope_1;
             x_end = x0 + (y - y0) * inv_slope_2;
-            if (x_end < x_start) { int_swap(&x_start, &x_end); }  // ensure x_end is on right
+            if (x_end < x_start) {
+                int_swap(&x_start, &x_end);
+            }  // ensure x_end is on right
             for (int x = x_start; x < x_end; x++) {
                 // get depth info for pixel
                 vec2_t p = {x, y};
@@ -126,9 +123,9 @@ void drawFilledTriangle(
                 float interp_recp_w = 1 - ((1 / a.w) * alpha + (1 / b.w) * beta + (1 / c.w) * gamma);
 
                 // redraw pixel if this one is closer to camera
-                if (interp_recp_w < z_buffer[(window_width * y) + x]) {
+                if (interp_recp_w < getZBufferAt(x, y)) {
                     drawPixel(x, y, colour);
-                    z_buffer[(window_width * y) + x] = interp_recp_w;
+                    setZBufferAt(x, y, interp_recp_w);
                 }
             }
         }
@@ -136,8 +133,8 @@ void drawFilledTriangle(
 }
 
 // draw textured pixel at (x, y) via interpolation
-void drawTexel(int x, int y, uint32_t* texture, vec4_t point_a, vec4_t point_b,
-               vec4_t point_c, tex2_t a_uv, tex2_t b_uv, tex2_t c_uv) {
+void drawTexel(int x, int y, uint32_t* texture, vec4_t point_a, vec4_t point_b, vec4_t point_c, tex2_t a_uv,
+               tex2_t b_uv, tex2_t c_uv) {
     vec2_t p = {x, y};
     vec2_t a = vec2_from_vec4(point_a);
     vec2_t b = vec2_from_vec4(point_b);
@@ -153,14 +150,11 @@ void drawTexel(int x, int y, uint32_t* texture, vec4_t point_a, vec4_t point_b,
 
     // perform interpolation of all U/w, V/w values using barycentrism with
     // factor of 1/w
-    interp_u = (a_uv.u / point_a.w) * alpha + (b_uv.u / point_b.w) * beta +
-               (c_uv.u / point_c.w) * gamma;
-    interp_v = (a_uv.v / point_a.w) * alpha + (b_uv.v / point_b.w) * beta +
-               (c_uv.v / point_c.w) * gamma;
+    interp_u = (a_uv.u / point_a.w) * alpha + (b_uv.u / point_b.w) * beta + (c_uv.u / point_c.w) * gamma;
+    interp_v = (a_uv.v / point_a.w) * alpha + (b_uv.v / point_b.w) * beta + (c_uv.v / point_c.w) * gamma;
 
     // interpolate 1/w for the current pixel
-    interp_recp_w = (1 / point_a.w) * alpha + (1 / point_b.w) * beta +
-                    (1 / point_c.w) * gamma;
+    interp_recp_w = (1 / point_a.w) * alpha + (1 / point_b.w) * beta + (1 / point_c.w) * gamma;
 
     // divide all attributes by reciprocal to undo the perspective transform
     interp_u /= interp_recp_w;
@@ -176,17 +170,16 @@ void drawTexel(int x, int y, uint32_t* texture, vec4_t point_a, vec4_t point_b,
 
     if (tex_x < texture_width && tex_y < texture_height) {
         // if 1/w < buffered z-value, i.e. closer to camera, plot pixel
-        if (interp_recp_w < z_buffer[(window_width * y) + x]) {
+        if (interp_recp_w < getZBufferAt(x, y)) {
             drawPixel(x, y, texture[(texture_width * tex_y) + tex_x]);
-            z_buffer[(window_width * y) + x] = interp_recp_w;
+            setZBufferAt(x, y, interp_recp_w);
         }
     }
 }
 
-void drawTexturedTriangle(int x0, int y0, float z0, float w0, float u0,
-                          float v0, int x1, int y1, float z1, float w1,
-                          float u1, float v1, int x2, int y2, float z2,
-                          float w2, float u2, float v2, uint32_t* texture) {
+void drawTexturedTriangle(int x0, int y0, float z0, float w0, float u0, float v0, int x1, int y1, float z1, float w1,
+                          float u1, float v1, int x2, int y2, float z2, float w2, float u2, float v2,
+                          uint32_t* texture) {
     // first sort the vertices by y coordinates ascending (y0 < y1 < y2)
     if (y0 > y1) {
         int_swap(&y0, &y1);
@@ -251,8 +244,7 @@ void drawTexturedTriangle(int x0, int y0, float z0, float w0, float u0,
                 // drawPixel(x, y, (x % 2 == 0 && y % 2 == 0 ? RED :
                 // 0x00000000));
 
-                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv,
-                          c_uv);
+                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
             }
         }
     }
@@ -279,8 +271,7 @@ void drawTexturedTriangle(int x0, int y0, float z0, float w0, float u0,
                 // drawPixel(x, y, (x % 2 == 0 && y % 2 == 0 ? RED :
                 // 0x00000000));
 
-                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv,
-                          c_uv);
+                drawTexel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
             }
         }
     }

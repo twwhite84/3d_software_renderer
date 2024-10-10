@@ -1,6 +1,10 @@
 #include "light.h"
 
-light_t light = {.direction = {0, 0, 1}};
+static light_t light;
+
+vec3_t getLightDirection(void) { return light.direction; }
+
+void init_light(vec3_t direction) { light.direction = direction; }
 
 uint32_t light_apply_intensity(uint32_t colour, float factor) {
     factor < 0 ? factor = 0 : factor;
@@ -10,8 +14,7 @@ uint32_t light_apply_intensity(uint32_t colour, float factor) {
     uint32_t r = (colour & 0x00ff0000) * factor;
     uint32_t g = (colour & 0x0000ff00) * factor;
     uint32_t b = (colour & 0x000000ff) * factor;
-    uint32_t new_colour =
-        a | (r & 0x00ff0000) | (g & 0x0000ff00) | (b & 0x000000ff);
+    uint32_t new_colour = a | (r & 0x00ff0000) | (g & 0x0000ff00) | (b & 0x000000ff);
 
     return new_colour;
 }
