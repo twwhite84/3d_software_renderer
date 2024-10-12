@@ -1,0 +1,35 @@
+import { vec3_t, vec3_to_vec4, vec4_t, vec4_to_vec3 } from './vector'
+import { make_rotator_x, make_rotator_y } from './matrix';
+import * as math from 'mathjs';
+
+export class Camera {
+    static position: vec3_t = [0, 0, 0];
+    static direction: vec3_t = [0, 0, 1];
+    static forward_velocity: vec3_t = [0, 0, 0];
+    static yaw: number = 0.0;
+    static pitch: number = 0.0;
+
+    static initCamera(position: vec3_t, direction: vec3_t) {
+        Camera.position = position;
+        Camera.direction = direction;
+        Camera.forward_velocity = [0, 0, 0];
+        Camera.yaw = 0.0;
+        Camera.pitch = 0.0;
+    }
+
+    static getTarget(): vec3_t {
+        let target: vec3_t = [0, 0, 1];
+        let yaw_rotation: math.Matrix = make_rotator_y(Camera.yaw);
+        let pitch_rotation: math.Matrix = make_rotator_x(Camera.pitch);
+        let camera_rotation: math.Matrix = math.identity(4) as math.Matrix;
+        camera_rotation = math.multiply(pitch_rotation, camera_rotation);
+        camera_rotation = math.multiply(yaw_rotation, camera_rotation);
+        let camera_direction: math.Matrix = math.multiply(camera_rotation, vec3_to_vec4(target));
+        Camera.direction = vec4_to_vec3(camera_direction.toArray() as vec4_t);
+        target = math.add(Camera.position, Camera.direction);
+        return target;
+    }
+
+    static rotateCameraX(pitch_radians: number) { Camera.pitch += pitch_radians; }
+    static rotateCameraY(yaw_radians: number) { Camera.yaw += yaw_radians; }
+}

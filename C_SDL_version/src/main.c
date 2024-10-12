@@ -50,8 +50,8 @@ void setup(void) {
     // texture_width = 64;
     // texture_height = 64;
 
-    load_obj_file_data("./assets/f22.obj");
-    loadPNGTexture("./assets/f22.png");
+    load_obj_file_data("./assets/cube.obj"); // loads into mesh
+    loadPNGTexture("./assets/cube.png");
 }
 
 /*----------------------------------------------------------------------------*/

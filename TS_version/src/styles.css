@@ -1,0 +1,16 @@
+body {
+    background-color: green;
+}
+
+#container {
+    display: flex;
+    justify-content: space-between;
+}
+
+#container-left {
+    width: 70%;
+}
+
+#container-right {
+    width: 30%;
+}
