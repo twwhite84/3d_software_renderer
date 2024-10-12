@@ -31,9 +31,9 @@ import { triangle_t } from './triangle';
 import * as math from 'mathjs';
 const X = 0, Y = 1, Z = 2, W = 3; // for indexing
 
-let aspect_y = 600 / 800;
-let aspect_x = 800 / 600;
-let fov_y = 90 * (3.1415 / 180);
+let aspect_y = Renderer.canvas.height / Renderer.canvas.width;
+let aspect_x = Renderer.canvas.width / Renderer.canvas.height;
+let fov_y = math.unit(90, 'deg').toNumber('rad');
 let fov_x = 2.0 * math.atan(math.tan(fov_y / 2) * (aspect_x));
 let z_near = 0.1;
 let z_far = 10.0;
@@ -93,13 +93,13 @@ function update() {
         transformed_vertices.forEach(vertex => {
             let projected_vertex: vec4_t = Matrix.mat4_mul_vec4_project(projection_matrix, vertex);
             // scale to viewport
-            projected_vertex[X] *= (800 / 2.0);
-            projected_vertex[Y] *= (600 / 2.0);
+            projected_vertex[X] *= (Renderer.canvas.width / 2.0);
+            projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
             // account for y-positive being down not up
             projected_vertex[Y] *= -1;
             // center
-            projected_vertex[X] += (800 / 2.0);
-            projected_vertex[Y] += (600 / 2.0);
+            projected_vertex[X] += (Renderer.canvas.width / 2.0);
+            projected_vertex[Y] += (Renderer.canvas.height / 2.0);
 
             projected_vertices.push(projected_vertex);
         });
@@ -107,38 +107,21 @@ function update() {
         // triangles
         let triangle_to_render: triangle_t = {
             points: projected_vertices,
-            colour: 0
+            colour: Colour.BLACK
         };
         triangles.push(triangle_to_render);
-
-
     });
-
-
 
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-let global_i: number = 0;
 function render() {
     Renderer.clear();
-    for (let i = 0; i < triangles.length; i++) {
-        let x = math.round(triangles[i].points[0][X]);
-        let y = math.round(triangles[i].points[0][Y]);
-        // Renderer.context.fillRect(x, y, 5, 5);
-        Renderer.drawVertex(x, y, 5, Colour.BLACK);
-        x = math.round(triangles[i].points[1][X]);
-        y = math.round(triangles[i].points[1][Y]);
-        // Renderer.context.fillRect(x, y, 5, 5);
-        Renderer.drawVertex(x, y, 5, Colour.BLACK);
-        x = math.round(triangles[i].points[2][X]);
-        y = math.round(triangles[i].points[2][Y]);
-        // Renderer.context.fillRect(x, y, 5, 5);
-        Renderer.drawVertex(x, y, 5, Colour.BLACK);
-
-        Renderer.context.putImageData(Renderer.image_data, 0, 0);
-    }
+    triangles.forEach(triangle => {
+        Renderer.render(triangle);
+    });
+    Renderer.refresh();
     triangles = [];
 }
 

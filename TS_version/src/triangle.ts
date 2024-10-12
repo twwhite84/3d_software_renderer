@@ -3,7 +3,7 @@ import { vec3_t, vec4_t } from './vector'
 export interface triangle_t {
     points: vec4_t[];
     // tex2_t texcoords[3];
-    colour: number;
+    colour: vec4_t;
 }
 
 
