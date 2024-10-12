@@ -1,5 +1,5 @@
 import { Camera } from './camera';
-import { Cube } from './cube';
+import { Cube, face_t } from './cube';
 import { Matrix } from './matrix';
 import { Renderer } from './renderer';
 import { Vector, vec3_t, vec4_t } from './vector';
@@ -17,16 +17,49 @@ function handleKeyUp(event: KeyboardEvent): void {
     keysDown[event.key] = false;
 }
 
+let keyAlreadyDown_1: boolean = false;
+let keyAlreadyDown_2: boolean = false;
+let keyAlreadyDown_3: boolean = false;
+let keyAlreadyDown_c: boolean = false;
+
 function processInput(): void {
-    // check keystates
-    if (keysDown['c']) {
-        cull_mode = true;
-        console.log("CULLING ENABLED");
+
+    // toggle backface culling
+    if (keysDown['c'] && keyAlreadyDown_c == false) {
+        cull_mode = !cull_mode;
+        keyAlreadyDown_c = true;
     }
-    if (keysDown['x']) {
-        cull_mode = false;
-        console.log("CULLING DISABLED");
+    if (!keysDown['c']) {
+        keyAlreadyDown_c = false;
     }
+
+    // toggle render vertices
+    if (keysDown['1'] && keyAlreadyDown_1 == false) {
+        Renderer.render_options.vertex = !Renderer.render_options.vertex;
+        keyAlreadyDown_1 = true;
+    }
+    if (!keysDown['1']) {
+        keyAlreadyDown_1 = false;
+    }
+
+    // toggle render wireframe
+    if (keysDown['2'] && keyAlreadyDown_2 == false) {
+        Renderer.render_options.wireframe = !Renderer.render_options.wireframe;
+        keyAlreadyDown_2 = true;
+    }
+    if (!keysDown['2']) {
+        keyAlreadyDown_2 = false;
+    }
+
+    // toggle render filled triangles
+    if (keysDown['3'] && keyAlreadyDown_3 == false) {
+        Renderer.render_options.filled = !Renderer.render_options.filled;
+        keyAlreadyDown_3 = true;
+    }
+    if (!keysDown['3']) {
+        keyAlreadyDown_3 = false;
+    }
+
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -78,6 +111,7 @@ let z_far = 10.0;
 let projection_matrix = Matrix.make_perspective(fov_y, aspect_y, z_near, z_far);
 let triangles: triangle_t[] = []
 let cull_mode: boolean = true;
+let z_buffer: number[] = []
 
 function update() {
 
@@ -110,10 +144,12 @@ function update() {
     for (let i = 0; i < Cube.faces.length; i++) {
 
         // get the vectors into 4d
-        let face = Cube.faces[i];
-        let v0: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[0]]);
-        let v1: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[1]]);
-        let v2: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[2]]);
+        // note: a "face" in this context refers to an unprocessed triangle from the mesh
+        // whereas a "triangle" is one that has been transformed
+        let face: face_t = Cube.faces[i];
+        let v0: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[0]]);
+        let v1: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[1]]);
+        let v2: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[2]]);
 
         // apply transforms
         let transformed_vertices: vec4_t[] = [v0, v1, v2];
@@ -147,7 +183,7 @@ function update() {
         // triangles
         let triangle_to_render: triangle_t = {
             points: projected_vertices,
-            colour: Colour.BLACK
+            colour: face.colour
         };
         triangles.push(triangle_to_render);
     }
@@ -158,6 +194,7 @@ function update() {
 
 function render() {
     Renderer.clear();
+    Renderer.clearZBuffer();
     triangles.forEach(triangle => {
         Renderer.render(triangle);
     });

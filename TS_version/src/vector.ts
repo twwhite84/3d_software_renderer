@@ -1,3 +1,4 @@
+export type vec2_t = [number, number];
 export type vec3_t = [number, number, number];
 export type vec4_t = [number, number, number, number];
 
