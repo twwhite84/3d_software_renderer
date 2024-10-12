@@ -5,6 +5,7 @@ export interface triangle_t {
     points: vec4_t[];
     // tex2_t texcoords[3];
     colour: vec4_t;
+    mean_z: number;
 }
 
 export class Triangle {

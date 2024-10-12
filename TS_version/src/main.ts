@@ -2,7 +2,7 @@ import { Camera } from './camera';
 import { Cube, face_t } from './cube';
 import { Matrix } from './matrix';
 import { Renderer } from './renderer';
-import { Vector, vec3_t, vec4_t } from './vector';
+import { Vector, VectorIndex, vec3_t, vec4_t } from './vector';
 import { Colour } from './colours';
 
 // /*--------------------------------------------------------------------------------------------------------------------*/
@@ -20,6 +20,7 @@ function handleKeyUp(event: KeyboardEvent): void {
 let keyAlreadyDown_1: boolean = false;
 let keyAlreadyDown_2: boolean = false;
 let keyAlreadyDown_3: boolean = false;
+let keyAlreadyDown_4: boolean = false;
 let keyAlreadyDown_c: boolean = false;
 
 function processInput(): void {
@@ -58,6 +59,15 @@ function processInput(): void {
     }
     if (!keysDown['3']) {
         keyAlreadyDown_3 = false;
+    }
+
+    // toggle render filled triangles with painter's algorithm
+    if (keysDown['4'] && keyAlreadyDown_4 == false) {
+        Renderer.render_options.filled_painters = !Renderer.render_options.filled_painters;
+        keyAlreadyDown_4 = true;
+    }
+    if (!keysDown['4']) {
+        keyAlreadyDown_4 = false;
     }
 
 }
@@ -181,13 +191,26 @@ function update() {
         });
 
         // triangles
+        let mean_z: number = 0;
+        if (Renderer.render_options.filled_painters == true) {
+            mean_z = math.mean(
+                projected_vertices[0][VectorIndex.Z],
+                projected_vertices[1][VectorIndex.Z],
+                projected_vertices[2][VectorIndex.Z],
+            )
+        }
+
         let triangle_to_render: triangle_t = {
             points: projected_vertices,
-            colour: face.colour
+            colour: face.colour,
+            mean_z: mean_z
         };
         triangles.push(triangle_to_render);
     }
-
+    // sort triangles by mean_z for painters algorithm
+    if (Renderer.render_options.filled_painters == true) {
+        triangles.sort((a, b) => a.mean_z - b.mean_z);
+    }
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

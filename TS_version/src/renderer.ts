@@ -6,7 +6,8 @@ import * as math from 'mathjs';
 interface RenderOptions {
     vertex: boolean,
     wireframe: boolean,
-    filled: boolean
+    filled: boolean,
+    filled_painters: boolean
 }
 
 export class Renderer {
@@ -26,7 +27,8 @@ export class Renderer {
         Renderer.render_options = {
             vertex: false,
             wireframe: true,
-            filled: false
+            filled: false,
+            filled_painters: false
         }
         Renderer.z_buffer = Array(Renderer.canvas.width * Renderer.canvas.height).fill(1);
     }
@@ -204,6 +206,83 @@ export class Renderer {
         }
     }
 
+    /**
+     * Painter's Algorithm Experiment
+     * This relies on triangles faces having been sorted by their mean z value.
+     * The sorting is performed in main when option 4 is enabled.
+     */
+    static fillTrianglePainters(triangle: triangle_t) {
+        let x0: number = math.round(triangle.points[0][VectorIndex.X]);
+        let y0: number = math.round(triangle.points[0][VectorIndex.Y]);
+        let z0: number = triangle.points[0][VectorIndex.Z];
+        let x1: number = math.round(triangle.points[1][VectorIndex.X]);
+        let y1: number = math.round(triangle.points[1][VectorIndex.Y]);
+        let z1: number = triangle.points[1][VectorIndex.Z];
+        let x2: number = math.round(triangle.points[2][VectorIndex.X]);
+        let y2: number = math.round(triangle.points[2][VectorIndex.Y]);
+        let z2: number = triangle.points[2][VectorIndex.Z];
+
+        // sort vertices by y-axis
+        if (y0 > y1) {
+            [x0, x1] = [x1, x0];
+            [y0, y1] = [y1, y0];
+            [z0, z1] = [z1, z0];
+        }
+
+        if (y1 > y2) {
+            [x1, x2] = [x2, x1];
+            [y1, y2] = [y2, y1];
+            [z1, z2] = [z2, z1];
+        }
+
+        if (y0 > y1) {
+            [x0, x1] = [x1, x0];
+            [y0, y1] = [y1, y0];
+            [z0, z1] = [z1, z0];
+        }
+
+        // create vector points
+        let a: vec3_t = [x0, y0, z0];
+        let b: vec3_t = [x1, y1, z1];
+        let c: vec3_t = [x2, y2, z2];
+
+        // fill flat bottom half
+        let inv_slope_1 = 0, inv_slope_2 = 0;
+        if ((y1 - y0) != 0) inv_slope_1 = (x1 - x0) / math.abs(y1 - y0);
+        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / math.abs(y2 - y0);
+        if (y1 - y0 != 0) {
+            for (let y = y0; y <= y1; y++) {
+                let x_start = 0, x_end = 0;
+                x_start = math.round(x1 + (y - y1) * inv_slope_1);
+                x_end = math.round(x0 + (y - y0) * inv_slope_2);
+
+                // ensure x_end is on right
+                if (x_end < x_start) {
+                    [x_end, x_start] = [x_start, x_end];
+                }
+
+                Renderer.drawLine(x_start, y, x_end, y, triangle.colour);
+            }
+        }
+
+        // render flat top (lower split of triangle)
+        inv_slope_1 = 0;
+        inv_slope_2 = 0;
+        if ((y2 - y1) != 0) inv_slope_1 = (x2 - x1) / math.abs(y2 - y1);
+        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / math.abs(y2 - y0);
+        if (y2 - y1 != 0) {
+            for (let y = y1; y <= y2; y++) {
+                let x_start = 0, x_end = 0;
+                x_start = math.round(x1 + (y - y1) * inv_slope_1);
+                x_end = math.round(x0 + (y - y0) * inv_slope_2);
+                if (x_end < x_start) {
+                    [x_start, x_end] = [x_end, x_start];
+                }
+                Renderer.drawLine(x_start, y, x_end, y, triangle.colour);
+            }
+        }
+    }
+
     static render(triangle: triangle_t) {
 
         // paint vertices
@@ -227,6 +306,11 @@ export class Renderer {
         // paint filled triangles
         if (Renderer.render_options.filled == true) {
             Renderer.fillTriangle(triangle);
+        }
+
+        // paint filled triangles, painter's algorithm
+        if (Renderer.render_options.filled_painters == true) {
+            Renderer.fillTrianglePainters(triangle);
         }
 
     }
