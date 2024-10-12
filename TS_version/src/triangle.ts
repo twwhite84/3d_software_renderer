@@ -1,21 +1,12 @@
 import { vec3_t, vec4_t } from './vector'
 
-export interface face_t {
-    a: number;
-    b: number;
-    c: number;
-    // tex2_t a_uv;
-    // tex2_t b_uv;
-    // tex2_t c_uv;
-    colour: number;
-}
-
 export interface triangle_t {
-    // points: vec4_t[] = [vec4_t, vec4_t, vec4_t]
     points: vec4_t[];
     // tex2_t texcoords[3];
     colour: number;
 }
+
+
 
 // void int_swap(int* a, int* b);
 

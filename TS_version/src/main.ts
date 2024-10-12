@@ -1,6 +1,9 @@
-let canvas: HTMLCanvasElement = document.getElementById("my-canvas") as HTMLCanvasElement;
-canvas.style.background = 'white';
-let context: CanvasRenderingContext2D = canvas.getContext('2d');
+import { Camera } from './camera';
+import { Cube } from './cube';
+import { Matrix } from './matrix';
+import { Renderer } from './renderer';
+import { Vector, vec3_t, vec4_t } from './vector';
+import { Colour } from './colours';
 
 // /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -24,11 +27,6 @@ function processInput(): void {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 
-
-import { Cube } from './cube';
-import { Camera } from './camera';
-import { vec3_t, vec4_t, vec3_to_vec4, vec4_to_vec3 } from './vector';
-import { make_perspective, make_rotator_x, make_rotator_y, make_rotator_z, make_scaler, make_translator, make_view, mat4_mul_vec4_project } from './matrix';
 import { triangle_t } from './triangle';
 import * as math from 'mathjs';
 const X = 0, Y = 1, Z = 2, W = 3; // for indexing
@@ -39,7 +37,7 @@ let fov_y = 90 * (3.1415 / 180);
 let fov_x = 2.0 * math.atan(math.tan(fov_y / 2) * (aspect_x));
 let z_near = 0.1;
 let z_far = 10.0;
-let projection_matrix = make_perspective(fov_y, aspect_y, z_near, z_far);
+let projection_matrix = Matrix.make_perspective(fov_y, aspect_y, z_near, z_far);
 let triangles: triangle_t[] = []
 
 function update() {
@@ -53,14 +51,14 @@ function update() {
     // update view matrix
     let camera_target: vec3_t = Camera.getTarget();
     let camera_up: vec3_t = [0, 1, 0];
-    let view_matrix: math.Matrix = make_view(Camera.position, camera_target, camera_up);
+    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, camera_up);
 
     // update transform matrix
-    let scale_matrix: math.Matrix = make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
-    let translation_matrix: math.Matrix = make_translator(Cube.translation[X], Cube.translation[Y], Cube.translation[Z]);
-    let rotation_matrix_x: math.Matrix = make_rotator_x(Cube.rotation[X]);
-    let rotation_matrix_y: math.Matrix = make_rotator_y(Cube.rotation[Y]);
-    let rotation_matrix_z: math.Matrix = make_rotator_z(Cube.rotation[Z]);
+    let scale_matrix: math.Matrix = Matrix.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
+    let translation_matrix: math.Matrix = Matrix.make_translator(Cube.translation[X], Cube.translation[Y], Cube.translation[Z]);
+    let rotation_matrix_x: math.Matrix = Matrix.make_rotator_x(Cube.rotation[X]);
+    let rotation_matrix_y: math.Matrix = Matrix.make_rotator_y(Cube.rotation[Y]);
+    let rotation_matrix_z: math.Matrix = Matrix.make_rotator_z(Cube.rotation[Z]);
     let world_matrix: math.Matrix = math.identity(4) as math.Matrix;
     world_matrix = math.multiply(world_matrix, scale_matrix);
     world_matrix = math.multiply(rotation_matrix_z, world_matrix);
@@ -73,9 +71,9 @@ function update() {
     Cube.faces.forEach(face => {
 
         // get the vectors into 4d
-        let v0: vec4_t = vec3_to_vec4(Cube.vertices[face[0]]);
-        let v1: vec4_t = vec3_to_vec4(Cube.vertices[face[1]]);
-        let v2: vec4_t = vec3_to_vec4(Cube.vertices[face[2]]);
+        let v0: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[0]]);
+        let v1: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[1]]);
+        let v2: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face[2]]);
 
         // apply transforms
         let transformed_vertices: vec4_t[] = [v0, v1, v2];
@@ -93,7 +91,7 @@ function update() {
         // projection
         let projected_vertices: vec4_t[] = []
         transformed_vertices.forEach(vertex => {
-            let projected_vertex: vec4_t = mat4_mul_vec4_project(projection_matrix, vertex);
+            let projected_vertex: vec4_t = Matrix.mat4_mul_vec4_project(projection_matrix, vertex);
             // scale to viewport
             projected_vertex[X] *= (800 / 2.0);
             projected_vertex[Y] *= (600 / 2.0);
@@ -122,18 +120,24 @@ function update() {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+let global_i: number = 0;
 function render() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    Renderer.clear();
     for (let i = 0; i < triangles.length; i++) {
-        let x = triangles[i].points[0][X]
-        let y = triangles[i].points[0][Y]
-        context.fillRect(x, y, 5, 5);
-        x = triangles[i].points[1][X]
-        y = triangles[i].points[1][Y]
-        context.fillRect(x, y, 5, 5);
-        x = triangles[i].points[2][X]
-        y = triangles[i].points[2][Y]
-        context.fillRect(x, y, 5, 5);
+        let x = math.round(triangles[i].points[0][X]);
+        let y = math.round(triangles[i].points[0][Y]);
+        // Renderer.context.fillRect(x, y, 5, 5);
+        Renderer.drawVertex(x, y, 5, Colour.BLACK);
+        x = math.round(triangles[i].points[1][X]);
+        y = math.round(triangles[i].points[1][Y]);
+        // Renderer.context.fillRect(x, y, 5, 5);
+        Renderer.drawVertex(x, y, 5, Colour.BLACK);
+        x = math.round(triangles[i].points[2][X]);
+        y = math.round(triangles[i].points[2][Y]);
+        // Renderer.context.fillRect(x, y, 5, 5);
+        Renderer.drawVertex(x, y, 5, Colour.BLACK);
+
+        Renderer.context.putImageData(Renderer.image_data, 0, 0);
     }
     triangles = [];
 }
@@ -164,8 +168,7 @@ function mainloop(timestamp: number): void {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-
-
 document.addEventListener('keydown', handleKeyDown);
 document.addEventListener('keyup', handleKeyUp);
 requestAnimationFrame(mainloop);
+console.log("PROGRAM IS RUNNING");
