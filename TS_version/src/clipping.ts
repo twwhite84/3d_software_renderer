@@ -104,6 +104,74 @@ export class Clipping {
         let current_vertex: vec3_t = polygon.vertices[idx];
         let previous_vertex: vec3_t = polygon.vertices[polygon.num_vertices - 1];
         let current_dot: number = 0;
+
+        if (point == undefined || previous_vertex == undefined) {
+            // debugger;
+            return polygon;
+        }
+
+        let previous_dot: number = math.dot(math.subtract(previous_vertex, point), normal);
+
+        // while current and last are different, i.e. not at the end
+        while (current_vertex != polygon.vertices[polygon.num_vertices]) {
+
+            if (point == undefined || previous_vertex == undefined) {
+                debugger;
+            }
+
+            current_dot = math.dot(math.subtract(current_vertex, point), normal);
+
+            // if vertex pair is inside-outside, find intersection
+            if ((current_dot * previous_dot) < 0) {
+                // find the interpolation factor t: dotQ1 / (dotQ1 - dotQ2)
+                let t: number = previous_dot / (previous_dot - current_dot);
+
+                // calculate intersection point I = Q1 + t(Q2-Q1)
+                let intersection_point: vec3_t = [
+                    Clipping.floatLerp(previous_vertex[VectorIndex.X], current_vertex[VectorIndex.X], t),
+                    Clipping.floatLerp(previous_vertex[VectorIndex.Y], current_vertex[VectorIndex.Y], t),
+                    Clipping.floatLerp(previous_vertex[VectorIndex.Z], current_vertex[VectorIndex.Z], t)
+                ];
+
+                // insert intersection point into list of "inside vertices"
+                inside_vertices[num_inside_vertices] = intersection_point;
+                num_inside_vertices++;
+            }
+
+            // current vertex is within the current frustum plane
+            if (current_dot > 0) {
+                inside_vertices[num_inside_vertices] = current_vertex;
+                num_inside_vertices++;
+            }
+
+            // move to the next vertex
+            previous_dot = current_dot;
+            previous_vertex = current_vertex;
+            current_vertex = polygon.vertices[idx + 1];
+            idx++;
+        }
+
+        // copy the list of inside vertices to the destination polygon (out param)
+        for (let i = 0; i < num_inside_vertices; i++) {
+            polygon.vertices[i] = inside_vertices[i];
+        }
+        polygon.num_vertices = num_inside_vertices;
+        return polygon;
+    }
+
+    /* static clipPolygonAgainstPlane(polygon: polygon_t, plane: FrustumPlanes): polygon_t {
+        // get the relevant plane
+        let point: vec3_t = Clipping.frustum_planes[plane].point;
+        let normal: vec3_t = Clipping.frustum_planes[plane].normal;
+
+        let inside_vertices: vec3_t[] = Array(Clipping.MAX_NUM_POLY_VERTICES);
+        let num_inside_vertices: number = 0;
+
+        // let current_vertex: vec3_t = polygon.vertices[0];
+        let idx: number = 0;
+        let current_vertex: vec3_t = polygon.vertices[idx];
+        let previous_vertex: vec3_t = polygon.vertices[polygon.num_vertices - 1];
+        let current_dot: number = 0;
         let previous_dot: number = math.dot(math.subtract(previous_vertex, point), normal);
 
         // while current and last are different, i.e. not at the end
@@ -146,7 +214,7 @@ export class Clipping {
         }
         polygon.num_vertices = num_inside_vertices;
         return polygon;
-    }
+    } */
 
     // static trianglesFromPolygon(polygon: polygon_t, triangles: triangle_t[], num_triangles: number): triangle_t[] {
     static trianglesFromPolygon(polygon: polygon_t): triangle_t[] {
