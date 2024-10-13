@@ -216,15 +216,15 @@ export class Renderer {
 
         // paint vertices
         if (Renderer.render_options.vertex == true) {
-            let x = math.round(triangle.points[0][VectorIndex.X]);
-            let y = math.round(triangle.points[0][VectorIndex.Y]);
-            Renderer.drawVertex(x, y, 5, Colour.BLACK);
-            x = math.round(triangle.points[1][VectorIndex.X]);
-            y = math.round(triangle.points[1][VectorIndex.Y]);
-            Renderer.drawVertex(x, y, 5, Colour.BLACK);
-            x = math.round(triangle.points[2][VectorIndex.X]);
-            y = math.round(triangle.points[2][VectorIndex.Y]);
-            Renderer.drawVertex(x, y, 5, Colour.BLACK);
+            let x = math.round(triangle.points[0][VectorIndex.X] - 2);
+            let y = math.round(triangle.points[0][VectorIndex.Y] - 2);
+            Renderer.drawVertex(x, y, 4, Colour.BLACK);
+            x = math.round(triangle.points[1][VectorIndex.X] - 2);
+            y = math.round(triangle.points[1][VectorIndex.Y] - 2);
+            Renderer.drawVertex(x, y, 4, Colour.BLACK);
+            x = math.round(triangle.points[2][VectorIndex.X] - 2);
+            y = math.round(triangle.points[2][VectorIndex.Y] - 2);
+            Renderer.drawVertex(x, y, 4, Colour.BLACK);
         }
 
         // paint lines

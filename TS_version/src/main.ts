@@ -115,9 +115,10 @@ let z_buffer: number[] = []
 function update() {
 
     // update the values on the mesh you want to transform here
-    Cube.rotation[Y] += 0.01;
-    // Cube.translation[Y] += 0.1;
-    Cube.rotation[X] += 0.01;
+    if (auto_rotate) {
+        Cube.rotation[X] += 0.01;
+        Cube.rotation[Y] += 0.01;
+    }
     Cube.translation[Z] = 3;
 
     // update view matrix
@@ -224,7 +225,9 @@ function mainloop(timestamp: number): void {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+let auto_rotate: boolean = false;
 document.addEventListener('keydown', handleKeyDown);
 document.addEventListener('keyup', handleKeyUp);
+document.getElementById('btn-auto-on').addEventListener('click', () => { auto_rotate = true; });
+document.getElementById('btn-auto-off').addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);
-console.log("PROGRAM IS RUNNING");
