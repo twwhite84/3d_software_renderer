@@ -86,8 +86,7 @@ function update() {
 
     // update view matrix
     let camera_target: vec3_t = Camera.getTarget();
-    let camera_up: vec3_t = [0, 1, 0];
-    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, camera_up);
+    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, Camera.camera_up);
 
     // update transform matrix
     let scale_matrix: math.Matrix = Matrix.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);

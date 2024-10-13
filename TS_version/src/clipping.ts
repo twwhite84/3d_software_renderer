@@ -50,22 +50,22 @@ export class Clipping {
             'point': origin,
             'normal': [-cos_half_fovx, 0, sin_half_fovx]
         }
-        
+
         Clipping.frustum_planes[FrustumPlanes.TOP_FRUSTUM_PLANE] = {
             'point': origin,
             'normal': [0, -cos_half_fovy, sin_half_fovy]
         }
-        
+
         Clipping.frustum_planes[FrustumPlanes.BOTTOM_FRUSTUM_PLANE] = {
             'point': origin,
             'normal': [0, cos_half_fovy, sin_half_fovy]
         }
-        
+
         Clipping.frustum_planes[FrustumPlanes.NEAR_FRUSTUM_PLANE] = {
             'point': [0, 0, z_near],
             'normal': [0, 0, 1]
         }
-        
+
         Clipping.frustum_planes[FrustumPlanes.FAR_FRUSTUM_PLANE] = {
             'point': [0, 0, z_far],
             'normal': [0, 0, -1]
@@ -106,7 +106,6 @@ export class Clipping {
         let current_dot: number = 0;
 
         if (point == undefined || previous_vertex == undefined) {
-            // debugger;
             return polygon;
         }
 
@@ -116,7 +115,7 @@ export class Clipping {
         while (current_vertex != polygon.vertices[polygon.num_vertices]) {
 
             if (point == undefined || previous_vertex == undefined) {
-                debugger;
+                return polygon;
             }
 
             current_dot = math.dot(math.subtract(current_vertex, point), normal);
@@ -232,7 +231,7 @@ export class Clipping {
                 ],
                 'colour': polygon.colour
             }
-            
+
             // triangle.points[0] = Vector.vec3_to_vec4(polygon.vertices[index0]);
             // triangle.points[1] = Vector.vec3_to_vec4(polygon.vertices[index1]);
             // triangle.points[2] = Vector.vec3_to_vec4(polygon.vertices[index2]);

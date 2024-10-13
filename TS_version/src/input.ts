@@ -9,7 +9,7 @@ export class Input {
     static keyAlreadyDown_2: boolean = false;
     static keyAlreadyDown_3: boolean = false;
     static keyAlreadyDown_c: boolean = false;
-    
+
     static registerKeyDown(event: KeyboardEvent): void {
         Input.keysDown[event.key] = true;
     }
@@ -35,7 +35,7 @@ export class Input {
         if (!Input.keysDown['c']) {
             Input.keyAlreadyDown_c = false;
         }
-    
+
         // toggle render vertices
         if (Input.keysDown['1'] && Input.keyAlreadyDown_1 == false) {
             Renderer.render_options.vertex = !Renderer.render_options.vertex;
@@ -44,7 +44,7 @@ export class Input {
         if (!Input.keysDown['1']) {
             Input.keyAlreadyDown_1 = false;
         }
-    
+
         // toggle render wireframe
         if (Input.keysDown['2'] && Input.keyAlreadyDown_2 == false) {
             Renderer.render_options.wireframe = !Renderer.render_options.wireframe;
@@ -53,7 +53,7 @@ export class Input {
         if (!Input.keysDown['2']) {
             Input.keyAlreadyDown_2 = false;
         }
-    
+
         // toggle render filled triangles
         if (Input.keysDown['3'] && Input.keyAlreadyDown_3 == false) {
             Renderer.render_options.filled = !Renderer.render_options.filled;
@@ -62,73 +62,69 @@ export class Input {
         if (!Input.keysDown['3']) {
             Input.keyAlreadyDown_3 = false;
         }
-    
+
         // turn camera right
         if (Input.keysDown['l']) {
             Camera.rotateCameraY(1.0 * ts_delta);
         }
-    
+
         // turn camera left
         if (Input.keysDown['j']) {
             Camera.rotateCameraY(-1.0 * ts_delta);
         }
-    
+
         // tilt camera up
         if (Input.keysDown['k']) {
             Camera.rotateCameraX(1.0 * ts_delta);
         }
-    
+
         // tilt camera down
         if (Input.keysDown['i']) {
             Camera.rotateCameraX(-1.0 * ts_delta);
         }
-    
+
         // walk forward
         if (Input.keysDown['w']) {
             Camera.forward_velocity = math.multiply(Camera.direction, 1.0 * ts_delta).valueOf() as vec3_t;
             Camera.position = math.add(Camera.position, Camera.forward_velocity);
         }
-    
+
         // walk backward
         if (Input.keysDown['s']) {
             Camera.forward_velocity = math.multiply(Camera.direction, -1.0 * ts_delta).valueOf() as vec3_t;
             Camera.position = math.add(Camera.position, Camera.forward_velocity);
         }
-    
+
         // pan up
         if (Input.keysDown['o']) {
             Camera.position = [
-                Camera.position[VectorIndex.X], 
+                Camera.position[VectorIndex.X],
                 Camera.position[VectorIndex.Y] + (3.0 * ts_delta),
                 Camera.position[VectorIndex.Z]
             ];
         }
-    
+
         // pan down
         if (Input.keysDown['u']) {
             Camera.position = [
-                Camera.position[VectorIndex.X], 
+                Camera.position[VectorIndex.X],
                 Camera.position[VectorIndex.Y] - (3.0 * ts_delta),
                 Camera.position[VectorIndex.Z]
             ];
         }
-    
+
         // strafe left
         if (Input.keysDown['a']) {
-            Camera.position = [
-                Camera.position[VectorIndex.X] - (3.0 * ts_delta), 
-                Camera.position[VectorIndex.Y],
-                Camera.position[VectorIndex.Z]
-            ];
+            Camera.position = math.add(
+                Camera.position, math.multiply(Camera.rightwards, 3.0 * ts_delta)
+            ).valueOf() as vec3_t;
         }
-    
+
         // strafe right
         if (Input.keysDown['d']) {
-            Camera.position = [
-                Camera.position[VectorIndex.X] + (3.0 * ts_delta), 
-                Camera.position[VectorIndex.Y],
-                Camera.position[VectorIndex.Z]
-            ];
+            Camera.position = math.add(
+                Camera.position, math.multiply(Camera.rightwards, -3.0 * ts_delta)
+            ).valueOf() as vec3_t;
         }
     }
 }
