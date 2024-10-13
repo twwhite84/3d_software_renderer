@@ -17,6 +17,7 @@ export class Renderer {
     static pixel_buffer: Uint8ClampedArray;
     static render_options: RenderOptions;
     static z_buffer: number[];
+    static cull_mode: boolean;
 
     static {
         Renderer.canvas = document.getElementById("my-canvas") as HTMLCanvasElement
@@ -34,6 +35,7 @@ export class Renderer {
             filled_painters: false
         }
         Renderer.z_buffer = Array(Renderer.canvas.width * Renderer.canvas.height).fill(1);
+        Renderer.cull_mode = true;
     }
 
     static clear() {

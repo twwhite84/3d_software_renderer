@@ -3,62 +3,25 @@ import { Cube, face_t } from './cube';
 import { Matrix } from './matrix';
 import { Renderer } from './renderer';
 import { Vector, VectorIndex, vec3_t, vec4_t } from './vector';
-import { Colour } from './colours';
+import { Clipping, polygon_t } from './clipping';
+import { Input } from './input';
 
-// /*--------------------------------------------------------------------------------------------------------------------*/
+function project(vertices: vec4_t[]): vec4_t[] {
+    let projected_vertices: vec4_t[] = []
+    vertices.forEach(vertex => {
+        let projected_vertex: vec4_t = Matrix.mat4_mul_vec4_project(projection_matrix, vertex);
+        // scale to viewport
+        projected_vertex[X] *= (Renderer.canvas.width / 2.0);
+        projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
+        // account for y-positive being down not up
+        projected_vertex[Y] *= -1;
+        // center
+        projected_vertex[X] += (Renderer.canvas.width / 2.0);
+        projected_vertex[Y] += (Renderer.canvas.height / 2.0);
 
-let keysDown: Record<string, boolean> = {};
-
-function handleKeyDown(event: KeyboardEvent): void {
-    keysDown[event.key] = true;
-}
-
-function handleKeyUp(event: KeyboardEvent): void {
-    keysDown[event.key] = false;
-}
-
-let keyAlreadyDown_1: boolean = false;
-let keyAlreadyDown_2: boolean = false;
-let keyAlreadyDown_3: boolean = false;
-let keyAlreadyDown_c: boolean = false;
-
-function processInput(): void {
-
-    // toggle backface culling
-    if (keysDown['c'] && keyAlreadyDown_c == false) {
-        cull_mode = !cull_mode;
-        keyAlreadyDown_c = true;
-    }
-    if (!keysDown['c']) {
-        keyAlreadyDown_c = false;
-    }
-
-    // toggle render vertices
-    if (keysDown['1'] && keyAlreadyDown_1 == false) {
-        Renderer.render_options.vertex = !Renderer.render_options.vertex;
-        keyAlreadyDown_1 = true;
-    }
-    if (!keysDown['1']) {
-        keyAlreadyDown_1 = false;
-    }
-
-    // toggle render wireframe
-    if (keysDown['2'] && keyAlreadyDown_2 == false) {
-        Renderer.render_options.wireframe = !Renderer.render_options.wireframe;
-        keyAlreadyDown_2 = true;
-    }
-    if (!keysDown['2']) {
-        keyAlreadyDown_2 = false;
-    }
-
-    // toggle render filled triangles
-    if (keysDown['3'] && keyAlreadyDown_3 == false) {
-        Renderer.render_options.filled = !Renderer.render_options.filled;
-        keyAlreadyDown_3 = true;
-    }
-    if (!keysDown['3']) {
-        keyAlreadyDown_3 = false;
-    }
+        projected_vertices.push(projected_vertex);
+    });
+    return projected_vertices;
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -109,8 +72,8 @@ let z_near = 0.1;
 let z_far = 10.0;
 let projection_matrix = Matrix.make_perspective(fov_y, aspect_y, z_near, z_far);
 let triangles: triangle_t[] = []
-let cull_mode: boolean = true;
 let z_buffer: number[] = []
+Clipping.initFrustumPlanes(fov_x, fov_y, z_near, z_far);
 
 function update() {
 
@@ -160,32 +123,30 @@ function update() {
         });
 
         // culling
-        if (cull_mode == true && shouldCull(transformed_vertices)) { continue; }
+        if (Renderer.cull_mode == true && shouldCull(transformed_vertices)) { continue; }
 
         // clipping
+        let polygon: polygon_t = Clipping.createPolygonFromTriangle(
+            Vector.vec4_to_vec3(transformed_vertices[0]),
+            Vector.vec4_to_vec3(transformed_vertices[1]),
+            Vector.vec4_to_vec3(transformed_vertices[2]),
+            face.colour
+        );
+        polygon = Clipping.clipPolygon(polygon);
+        // let triangles_after_clipping: triangle_t[] = Array(Clipping.MAX_NUM_POLY_TRIANGLES);
+        // let num_triangles_after_clipping: number = 0;
+        let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
 
         // projection
-        let projected_vertices: vec4_t[] = []
-        transformed_vertices.forEach(vertex => {
-            let projected_vertex: vec4_t = Matrix.mat4_mul_vec4_project(projection_matrix, vertex);
-            // scale to viewport
-            projected_vertex[X] *= (Renderer.canvas.width / 2.0);
-            projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
-            // account for y-positive being down not up
-            projected_vertex[Y] *= -1;
-            // center
-            projected_vertex[X] += (Renderer.canvas.width / 2.0);
-            projected_vertex[Y] += (Renderer.canvas.height / 2.0);
+        clipped_triangles.forEach(triangle => {
+            let projected_vertices = project(triangle.points);
+            let triangle_to_render: triangle_t = {
+                points: projected_vertices,
+                colour: face.colour,
+            };
+            triangles.push(triangle_to_render);
+        })
 
-            projected_vertices.push(projected_vertex);
-        });
-
-        // triangles
-        let triangle_to_render: triangle_t = {
-            points: projected_vertices,
-            colour: face.colour,
-        };
-        triangles.push(triangle_to_render);
     }
 }
 
@@ -212,7 +173,7 @@ function mainloop(timestamp: number): void {
     ts_old = ts;
 
     // handle input
-    processInput();
+    Input.processInput(ts_delta);
 
     // update
     update();
@@ -226,8 +187,10 @@ function mainloop(timestamp: number): void {
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 let auto_rotate: boolean = false;
-document.addEventListener('keydown', handleKeyDown);
-document.addEventListener('keyup', handleKeyUp);
+document.addEventListener('keydown', Input.registerKeyDown);
+document.addEventListener('keyup', Input.registerKeyUp);
+// document.addEventListener('mousemove', handleMouseEvent);
 document.getElementById('btn-auto-on').addEventListener('click', () => { auto_rotate = true; });
 document.getElementById('btn-auto-off').addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);
+
