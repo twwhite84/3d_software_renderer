@@ -76,11 +76,15 @@ export class Input {
         // tilt camera up
         if (Input.keysDown['k']) {
             Camera.rotateCameraX(1.0 * ts_delta);
+            let max_tilt_up: number = math.unit(89, 'deg').toNumber('rad')
+            if (Camera.pitch > max_tilt_up) Camera.pitch = max_tilt_up;
         }
 
         // tilt camera down
         if (Input.keysDown['i']) {
             Camera.rotateCameraX(-1.0 * ts_delta);
+            let max_tilt_down: number = math.unit(-89, 'deg').toNumber('rad')
+            if (Camera.pitch < max_tilt_down) Camera.pitch = max_tilt_down;
         }
 
         // walk forward
@@ -116,14 +120,14 @@ export class Input {
         // strafe left
         if (Input.keysDown['a']) {
             Camera.position = math.add(
-                Camera.position, math.multiply(Camera.rightwards, 3.0 * ts_delta)
+                Camera.position, math.multiply(Camera.right, 3.0 * ts_delta)
             ).valueOf() as vec3_t;
         }
 
         // strafe right
         if (Input.keysDown['d']) {
             Camera.position = math.add(
-                Camera.position, math.multiply(Camera.rightwards, -3.0 * ts_delta)
+                Camera.position, math.multiply(Camera.right, -3.0 * ts_delta)
             ).valueOf() as vec3_t;
         }
     }

@@ -79,14 +79,14 @@ function update() {
 
     // update the values on the mesh you want to transform here
     if (auto_rotate) {
-        Cube.rotation[X] += 0.01;
-        Cube.rotation[Y] += 0.01;
+        Cube.rotation[X] += 0.5 * ts_delta;
+        Cube.rotation[Y] += 0.5 * ts_delta;
     }
     Cube.translation[Z] = 3;
 
     // update view matrix
     let camera_target: vec3_t = Camera.getTarget();
-    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, Camera.camera_up);
+    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, Camera.up);
 
     // update transform matrix
     let scale_matrix: math.Matrix = Matrix.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
@@ -188,7 +188,7 @@ function mainloop(timestamp: number): void {
 let auto_rotate: boolean = false;
 document.addEventListener('keydown', Input.registerKeyDown);
 document.addEventListener('keyup', Input.registerKeyUp);
-// document.addEventListener('mousemove', handleMouseEvent);
+// document.addEventListener('mousemove', (event: MouseEvent) => Input.handleMouseEvent(event, ts_delta));
 document.getElementById('btn-auto-on').addEventListener('click', () => { auto_rotate = true; });
 document.getElementById('btn-auto-off').addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);

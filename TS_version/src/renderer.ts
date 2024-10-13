@@ -24,7 +24,6 @@ export class Renderer {
         Renderer.canvas.style.background = 'lightgrey';
         Renderer.canvas.width = 320;
         Renderer.canvas.height = 200;
-        // Renderer.context.scale(2.0, 2.0);
         Renderer.context = Renderer.canvas.getContext('2d');
         Renderer.image_data = Renderer.context.getImageData(0, 0, Renderer.canvas.width, Renderer.canvas.height);
         Renderer.pixel_buffer = Renderer.image_data.data;
