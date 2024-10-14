@@ -1,7 +1,7 @@
 import { Camera } from "./camera";
 import { Renderer } from "./renderer";
-import * as math from 'mathjs';
 import { vec3_t, VectorIndex } from "./vector";
+import { mathHelper } from "./mathHelper";
 
 export class Input {
     static keysDown: Record<string, boolean> = {};
@@ -76,27 +76,27 @@ export class Input {
         // tilt camera up
         if (Input.keysDown['k']) {
             Camera.rotateCameraX(1.0 * ts_delta);
-            let max_tilt_up: number = math.unit(89, 'deg').toNumber('rad')
+            let max_tilt_up: number = 89 * (Math.PI / 180);
             if (Camera.pitch > max_tilt_up) Camera.pitch = max_tilt_up;
         }
 
         // tilt camera down
         if (Input.keysDown['i']) {
             Camera.rotateCameraX(-1.0 * ts_delta);
-            let max_tilt_down: number = math.unit(-89, 'deg').toNumber('rad')
+            let max_tilt_down: number = -89 * (Math.PI / 180);
             if (Camera.pitch < max_tilt_down) Camera.pitch = max_tilt_down;
         }
 
         // walk forward
         if (Input.keysDown['w']) {
-            Camera.forward_velocity = math.multiply(Camera.direction, 1.0 * ts_delta).valueOf() as vec3_t;
-            Camera.position = math.add(Camera.position, Camera.forward_velocity);
+            Camera.forward_velocity = mathHelper.multiply(Camera.direction, 1.0 * ts_delta).valueOf() as vec3_t;
+            Camera.position = mathHelper.add(Camera.position, Camera.forward_velocity);
         }
 
         // walk backward
         if (Input.keysDown['s']) {
-            Camera.forward_velocity = math.multiply(Camera.direction, -1.0 * ts_delta).valueOf() as vec3_t;
-            Camera.position = math.add(Camera.position, Camera.forward_velocity);
+            Camera.forward_velocity = mathHelper.multiply(Camera.direction, -1.0 * ts_delta).valueOf() as vec3_t;
+            Camera.position = mathHelper.add(Camera.position, Camera.forward_velocity);
         }
 
         // pan up
@@ -119,15 +119,15 @@ export class Input {
 
         // strafe left
         if (Input.keysDown['a']) {
-            Camera.position = math.add(
-                Camera.position, math.multiply(Camera.right, 3.0 * ts_delta)
+            Camera.position = mathHelper.add(
+                Camera.position, mathHelper.multiply(Camera.right, 3.0 * ts_delta)
             ).valueOf() as vec3_t;
         }
 
         // strafe right
         if (Input.keysDown['d']) {
-            Camera.position = math.add(
-                Camera.position, math.multiply(Camera.right, -3.0 * ts_delta)
+            Camera.position = mathHelper.add(
+                Camera.position, mathHelper.multiply(Camera.right, -3.0 * ts_delta)
             ).valueOf() as vec3_t;
         }
     }

@@ -1,7 +1,7 @@
 import { Colour } from './colours';
 import { triangle_t, Triangle } from './triangle';
 import { vec2_t, vec3_t, vec4_t, Vector, VectorIndex } from './vector';
-import * as math from 'mathjs';
+import { mathHelper } from './mathHelper';
 
 interface RenderOptions {
     vertex: boolean,
@@ -66,13 +66,13 @@ export class Renderer {
     static drawLine(x0: number, y0: number, x1: number, y1: number, colour: vec4_t) {
         let delta_x = (x1 - x0);
         let delta_y = (y1 - y0);
-        let longest_side_length = (math.abs(delta_x) >= math.abs(delta_y)) ? math.abs(delta_x) : math.abs(delta_y);
+        let longest_side_length = (Math.abs(delta_x) >= Math.abs(delta_y)) ? Math.abs(delta_x) : Math.abs(delta_y);
         let x_inc = delta_x / longest_side_length;
         let y_inc = delta_y / longest_side_length;
         let current_x = x0;
         let current_y = y0;
         for (let i = 0; i <= longest_side_length; i++) {
-            Renderer.drawPixel(math.round(current_x), math.round(current_y), colour);
+            Renderer.drawPixel(Math.round(current_x), Math.round(current_y), colour);
             current_x += x_inc;
             current_y += y_inc;
         }
@@ -91,16 +91,16 @@ export class Renderer {
     }
 
     static fillTriangle(triangle: triangle_t) {
-        let x0: number = math.round(triangle.points[0][VectorIndex.X]);
-        let y0: number = math.round(triangle.points[0][VectorIndex.Y]);
+        let x0: number = Math.round(triangle.points[0][VectorIndex.X]);
+        let y0: number = Math.round(triangle.points[0][VectorIndex.Y]);
         let z0: number = triangle.points[0][VectorIndex.Z];
         let w0: number = triangle.points[0][VectorIndex.W];
-        let x1: number = math.round(triangle.points[1][VectorIndex.X]);
-        let y1: number = math.round(triangle.points[1][VectorIndex.Y]);
+        let x1: number = Math.round(triangle.points[1][VectorIndex.X]);
+        let y1: number = Math.round(triangle.points[1][VectorIndex.Y]);
         let z1: number = triangle.points[1][VectorIndex.Z];
         let w1: number = triangle.points[1][VectorIndex.W];
-        let x2: number = math.round(triangle.points[2][VectorIndex.X]);
-        let y2: number = math.round(triangle.points[2][VectorIndex.Y]);
+        let x2: number = Math.round(triangle.points[2][VectorIndex.X]);
+        let y2: number = Math.round(triangle.points[2][VectorIndex.Y]);
         let z2: number = triangle.points[2][VectorIndex.Z];
         let w2: number = triangle.points[2][VectorIndex.W];
 
@@ -133,12 +133,12 @@ export class Renderer {
 
         // fill flat bottom half
         let inv_slope_1 = 0, inv_slope_2 = 0;
-        if ((y1 - y0) != 0) inv_slope_1 = (x1 - x0) / math.abs(y1 - y0);
-        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / math.abs(y2 - y0);
+        if ((y1 - y0) != 0) inv_slope_1 = (x1 - x0) / Math.abs(y1 - y0);
+        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / Math.abs(y2 - y0);
         if (y1 - y0 != 0) {
             for (let y = y0; y <= y1; y++) {
-                let x_start = math.round(x1 + (y - y1) * inv_slope_1);
-                let x_end = math.round(x0 + (y - y0) * inv_slope_2);
+                let x_start = Math.round(x1 + (y - y1) * inv_slope_1);
+                let x_end = Math.round(x0 + (y - y0) * inv_slope_2);
 
                 // ensure x_end is on right
                 if (x_end < x_start) {
@@ -173,12 +173,12 @@ export class Renderer {
         // render flat top (lower split of triangle)
         inv_slope_1 = 0;
         inv_slope_2 = 0;
-        if ((y2 - y1) != 0) inv_slope_1 = (x2 - x1) / math.abs(y2 - y1);
-        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / math.abs(y2 - y0);
+        if ((y2 - y1) != 0) inv_slope_1 = (x2 - x1) / Math.abs(y2 - y1);
+        if ((y2 - y0) != 0) inv_slope_2 = (x2 - x0) / Math.abs(y2 - y0);
         if (y2 - y1 != 0) {
             for (let y = y1; y <= y2; y++) {
-                let x_start = math.round(x1 + (y - y1) * inv_slope_1);
-                let x_end = math.round(x0 + (y - y0) * inv_slope_2);
+                let x_start = Math.round(x1 + (y - y1) * inv_slope_1);
+                let x_end = Math.round(x0 + (y - y0) * inv_slope_2);
                 if (x_end < x_start) {
                     [x_start, x_end] = [x_end, x_start];
                 }
@@ -217,14 +217,14 @@ export class Renderer {
 
         // paint vertices
         if (Renderer.render_options.vertex == true) {
-            let x = math.round(triangle.points[0][VectorIndex.X] - 2);
-            let y = math.round(triangle.points[0][VectorIndex.Y] - 2);
+            let x = Math.round(triangle.points[0][VectorIndex.X] - 2);
+            let y = Math.round(triangle.points[0][VectorIndex.Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
-            x = math.round(triangle.points[1][VectorIndex.X] - 2);
-            y = math.round(triangle.points[1][VectorIndex.Y] - 2);
+            x = Math.round(triangle.points[1][VectorIndex.X] - 2);
+            y = Math.round(triangle.points[1][VectorIndex.Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
-            x = math.round(triangle.points[2][VectorIndex.X] - 2);
-            y = math.round(triangle.points[2][VectorIndex.Y] - 2);
+            x = Math.round(triangle.points[2][VectorIndex.X] - 2);
+            y = Math.round(triangle.points[2][VectorIndex.Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
         }
 

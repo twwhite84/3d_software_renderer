@@ -1,5 +1,5 @@
 import { vec2_t, vec3_t, vec4_t, VectorIndex } from './vector'
-import * as math from 'mathjs';
+import { mathHelper } from './mathHelper';
 
 export interface triangle_t {
     points: vec4_t[];
@@ -10,11 +10,11 @@ export interface triangle_t {
 export class Triangle {
 
     static barycentricWeights(a: vec2_t, b: vec2_t, c: vec2_t, p: vec2_t): vec3_t {
-        let AC: vec2_t = math.subtract(c, a);
-        let AB: vec2_t = math.subtract(b, a);
-        let PC: vec2_t = math.subtract(c, p);
-        let PB: vec2_t = math.subtract(b, p);
-        let AP: vec2_t = math.subtract(p, a);
+        let AC: vec2_t = mathHelper.subtract(c, a);
+        let AB: vec2_t = mathHelper.subtract(b, a);
+        let PC: vec2_t = mathHelper.subtract(c, p);
+        let PB: vec2_t = mathHelper.subtract(b, p);
+        let AP: vec2_t = mathHelper.subtract(p, a);
 
         // ||ACxAB||
         let area_parallelogram_abc: number = (

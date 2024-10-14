@@ -1,15 +1,19 @@
 import { Camera } from './camera';
 import { Cube, face_t } from './cube';
-import { Matrix } from './matrix';
+import { Matrices } from './matrices';
 import { Renderer } from './renderer';
 import { Vector, VectorIndex, vec3_t, vec4_t } from './vector';
 import { Clipping, polygon_t } from './clipping';
 import { Input } from './input';
+import { triangle_t } from './triangle';
+import { mathHelper } from './mathHelper';
+
+const X = VectorIndex.X, Y = VectorIndex.Y, Z = VectorIndex.Z, W = VectorIndex.W;
 
 function project(vertices: vec4_t[]): vec4_t[] {
     let projected_vertices: vec4_t[] = []
     vertices.forEach(vertex => {
-        let projected_vertex: vec4_t = Matrix.mat4_mul_vec4_project(projection_matrix, vertex);
+        let projected_vertex: vec4_t = Matrices.mat4_mul_vec4_project(projection_matrix, vertex);
         // scale to viewport
         projected_vertex[X] *= (Renderer.canvas.width / 2.0);
         projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
@@ -37,21 +41,21 @@ function shouldCull(vertices: vec4_t[]): boolean {
     let a: vec3_t = Vector.vec4_to_vec3(vertices[0]);
     let b: vec3_t = Vector.vec4_to_vec3(vertices[1]);
     let c: vec3_t = Vector.vec4_to_vec3(vertices[2]);
-    let ab: vec3_t = math.subtract(b, a);
-    let ac: vec3_t = math.subtract(c, a);
-    ab = math.divide(ab, math.norm(ab)).valueOf() as vec3_t;
-    ac = math.divide(ac, math.norm(ac)).valueOf() as vec3_t;
+    let ab: vec3_t = mathHelper.subtract(b, a);
+    let ac: vec3_t = mathHelper.subtract(c, a);
+    ab = mathHelper.divide(ab, mathHelper.norm(ab)).valueOf() as vec3_t;
+    ac = mathHelper.divide(ac, mathHelper.norm(ac)).valueOf() as vec3_t;
 
     // 2. find the outward normal to the triangle
-    let normal: vec3_t = math.cross(ab, ac).valueOf() as vec3_t;
-    normal = math.divide(normal, math.norm(normal)).valueOf() as vec3_t;
+    let normal: vec3_t = mathHelper.cross(ab, ac).valueOf() as vec3_t;
+    normal = mathHelper.divide(normal, mathHelper.norm(normal)).valueOf() as vec3_t;
 
     // 3. find camera ray vector. origin is relative to camera position.
     let origin: vec3_t = [0, 0, 0];
-    let camera_ray: vec3_t = math.subtract(origin, a);
+    let camera_ray: vec3_t = mathHelper.subtract(origin, a);
 
     // 4. take dot product between normal N and camera ray
-    let dot_normal_camera: number = math.dot(normal, camera_ray);
+    let dot_normal_camera: number = mathHelper.dot(normal, camera_ray);
 
     // 5. skip rendering triangle (i.e. cull) if angled too far away
     if (dot_normal_camera < 0) { return true }
@@ -60,17 +64,13 @@ function shouldCull(vertices: vec4_t[]): boolean {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-import { triangle_t } from './triangle';
-import * as math from 'mathjs';
-const X = 0, Y = 1, Z = 2, W = 3; // for indexing
-
 let aspect_y = Renderer.canvas.height / Renderer.canvas.width;
 let aspect_x = Renderer.canvas.width / Renderer.canvas.height;
-let fov_y = math.unit(90, 'deg').toNumber('rad');
-let fov_x = 2.0 * math.atan(math.tan(fov_y / 2) * (aspect_x));
+let fov_y = 90 * (Math.PI / 180);
+let fov_x = 2.0 * Math.atan(Math.tan(fov_y / 2) * (aspect_x));
 let z_near = 0.1;
 let z_far = 10.0;
-let projection_matrix = Matrix.make_perspective(fov_y, aspect_y, z_near, z_far);
+let projection_matrix = Matrices.make_perspective(fov_y, aspect_y, z_near, z_far);
 let triangles: triangle_t[] = []
 let z_buffer: number[] = []
 Clipping.initFrustumPlanes(fov_x, fov_y, z_near, z_far);
@@ -86,20 +86,20 @@ function update() {
 
     // update view matrix
     let camera_target: vec3_t = Camera.getTarget();
-    let view_matrix: math.Matrix = Matrix.make_view(Camera.position, camera_target, Camera.up);
+    let view_matrix: math.Matrix = Matrices.make_view(Camera.position, camera_target, Camera.up);
 
     // update transform matrix
-    let scale_matrix: math.Matrix = Matrix.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
-    let translation_matrix: math.Matrix = Matrix.make_translator(Cube.translation[X], Cube.translation[Y], Cube.translation[Z]);
-    let rotation_matrix_x: math.Matrix = Matrix.make_rotator_x(Cube.rotation[X]);
-    let rotation_matrix_y: math.Matrix = Matrix.make_rotator_y(Cube.rotation[Y]);
-    let rotation_matrix_z: math.Matrix = Matrix.make_rotator_z(Cube.rotation[Z]);
-    let world_matrix: math.Matrix = math.identity(4) as math.Matrix;
-    world_matrix = math.multiply(world_matrix, scale_matrix);
-    world_matrix = math.multiply(rotation_matrix_z, world_matrix);
-    world_matrix = math.multiply(rotation_matrix_y, world_matrix);
-    world_matrix = math.multiply(rotation_matrix_x, world_matrix);
-    world_matrix = math.multiply(translation_matrix, world_matrix);
+    let scale_matrix: math.Matrix = Matrices.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
+    let translation_matrix: math.Matrix = Matrices.make_translator(Cube.translation[X], Cube.translation[Y], Cube.translation[Z]);
+    let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(Cube.rotation[X]);
+    let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(Cube.rotation[Y]);
+    let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(Cube.rotation[Z]);
+    let world_matrix: math.Matrix = mathHelper.identity(4) as math.Matrix;
+    world_matrix = mathHelper.multiply(world_matrix, scale_matrix);
+    world_matrix = mathHelper.multiply(rotation_matrix_z, world_matrix);
+    world_matrix = mathHelper.multiply(rotation_matrix_y, world_matrix);
+    world_matrix = mathHelper.multiply(rotation_matrix_x, world_matrix);
+    world_matrix = mathHelper.multiply(translation_matrix, world_matrix);
 
 
     // process every triangle in the mesh
@@ -116,8 +116,8 @@ function update() {
         // apply transforms
         let transformed_vertices: vec4_t[] = [v0, v1, v2];
         transformed_vertices.forEach((vertex, index) => {
-            let transformed_vertex: vec4_t = math.multiply(world_matrix, vertex).valueOf() as vec4_t;
-            transformed_vertex = math.multiply(view_matrix, transformed_vertex).valueOf() as vec4_t;
+            let transformed_vertex: vec4_t = mathHelper.multiply(world_matrix, vertex).valueOf() as vec4_t;
+            transformed_vertex = mathHelper.multiply(view_matrix, transformed_vertex).valueOf() as vec4_t;
             transformed_vertices[index] = transformed_vertex;
         });
 
@@ -132,8 +132,6 @@ function update() {
             face.colour
         );
         polygon = Clipping.clipPolygon(polygon);
-        // let triangles_after_clipping: triangle_t[] = Array(Clipping.MAX_NUM_POLY_TRIANGLES);
-        // let num_triangles_after_clipping: number = 0;
         let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
 
         // projection
@@ -192,4 +190,3 @@ document.addEventListener('keyup', Input.registerKeyUp);
 document.getElementById('btn-auto-on').addEventListener('click', () => { auto_rotate = true; });
 document.getElementById('btn-auto-off').addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);
-

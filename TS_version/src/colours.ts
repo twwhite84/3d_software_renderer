@@ -1,5 +1,3 @@
-// you can pass these to the Renderer functions like drawPixel()
-
 import { vec4_t } from "./vector";
 
 export class Colour {
