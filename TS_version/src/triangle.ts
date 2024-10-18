@@ -10,11 +10,19 @@ export interface triangle_t {
 export class Triangle {
 
     static barycentricWeights(a: vec2_t, b: vec2_t, c: vec2_t, p: vec2_t): vec3_t {
-        let AC: vec2_t = mathHelper.subtract(c, a);
-        let AB: vec2_t = mathHelper.subtract(b, a);
-        let PC: vec2_t = mathHelper.subtract(c, p);
-        let PB: vec2_t = mathHelper.subtract(b, p);
-        let AP: vec2_t = mathHelper.subtract(p, a);
+
+        // MATHJS SUBTRACT FUNCTION IS TOO SLOW HERE
+        // let AC: vec2_t = mathHelper.subtract(c, a);
+        // let AB: vec2_t = mathHelper.subtract(b, a);
+        // let PC: vec2_t = mathHelper.subtract(c, p);
+        // let PB: vec2_t = mathHelper.subtract(b, p);
+        // let AP: vec2_t = mathHelper.subtract(p, a);
+
+        let AC: vec2_t = [(c[0] - a[0]), (c[1] - a[1])];
+        let AB: vec2_t = [(b[0] - a[0]), (b[1] - a[1])];
+        let PC: vec2_t = [(c[0] - p[0]), (c[1] - p[1])];
+        let PB: vec2_t = [(b[0] - p[0]), (b[1] - p[1])];
+        let AP: vec2_t = [(p[0] - a[0]), (p[1] - a[1])];
 
         // ||ACxAB||
         let area_parallelogram_abc: number = (

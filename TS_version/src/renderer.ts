@@ -24,7 +24,7 @@ export class Renderer {
         Renderer.canvas.style.background = 'lightgrey';
         Renderer.canvas.width = 320;
         Renderer.canvas.height = 200;
-        Renderer.context = Renderer.canvas.getContext('2d');
+        Renderer.context = Renderer.canvas.getContext('2d')!;
         Renderer.image_data = Renderer.context.getImageData(0, 0, Renderer.canvas.width, Renderer.canvas.height);
         Renderer.pixel_buffer = Renderer.image_data.data;
         Renderer.render_options = {
@@ -182,6 +182,7 @@ export class Renderer {
                 if (x_end < x_start) {
                     [x_start, x_end] = [x_end, x_start];
                 }
+
                 for (let x = x_start; x < x_end; x++) {
                     // get depth info for pixel
                     let p: vec2_t = [x, y];
@@ -194,6 +195,7 @@ export class Renderer {
                     let alpha: number = weights[VectorIndex.X];
                     let beta: number = weights[VectorIndex.Y];
                     let gamma: number = weights[VectorIndex.Z];
+
                     let interp_recp_w: number = 1 - (
                         (1 / a[VectorIndex.W]) * alpha + (1 / b[VectorIndex.W]) * beta + (1 / c[VectorIndex.W]) * gamma
                     );

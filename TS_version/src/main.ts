@@ -11,7 +11,7 @@ import { mathHelper } from './mathHelper';
 const X = VectorIndex.X, Y = VectorIndex.Y, Z = VectorIndex.Z, W = VectorIndex.W;
 
 function project(vertices: vec4_t[]): vec4_t[] {
-    let projected_vertices: vec4_t[] = []
+    let projected_vertices: vec4_t[] = [];
     vertices.forEach(vertex => {
         let projected_vertex: vec4_t = Matrices.mat4_mul_vec4_project(projection_matrix, vertex);
         // scale to viewport
@@ -187,6 +187,6 @@ let auto_rotate: boolean = false;
 document.addEventListener('keydown', Input.registerKeyDown);
 document.addEventListener('keyup', Input.registerKeyUp);
 // document.addEventListener('mousemove', (event: MouseEvent) => Input.handleMouseEvent(event, ts_delta));
-document.getElementById('btn-auto-on').addEventListener('click', () => { auto_rotate = true; });
-document.getElementById('btn-auto-off').addEventListener('click', () => { auto_rotate = false; });
+document.getElementById('btn-auto-on')!.addEventListener('click', () => { auto_rotate = true; });
+document.getElementById('btn-auto-off')!.addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);
