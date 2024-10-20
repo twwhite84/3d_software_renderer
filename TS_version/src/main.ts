@@ -10,6 +10,17 @@ import { mathHelper } from './mathHelper';
 
 const X = VectorIndex.X, Y = VectorIndex.Y, Z = VectorIndex.Z, W = VectorIndex.W;
 
+let cubes: Cube[] = [];
+cubes.push(new Cube([-2, 0, 0]));
+cubes.push(new Cube([-2, 2, 0]));
+cubes.push(new Cube([0, 2, 0]));
+cubes.push(new Cube([2, 2, 0]));
+cubes.push(new Cube([2, 0, 0]));
+
+
+
+// ---------------------------------------------------------------------------------------------------------------
+
 function project(vertices: vec4_t[]): vec4_t[] {
     let projected_vertices: vec4_t[] = [];
     vertices.forEach(vertex => {
@@ -79,72 +90,74 @@ function update() {
 
     // update the values on the mesh you want to transform here
     if (auto_rotate) {
-        Cube.rotation[X] += 0.5 * ts_delta;
-        Cube.rotation[Y] += 0.5 * ts_delta;
+        //     Cube.rotation[X] += 0.5 * ts_delta;
+        //     Cube.rotation[Y] += 0.5 * ts_delta;
+        Camera.rotateCameraY(0.1);
     }
-    Cube.translation[Z] = 3;
 
     // update view matrix
     let camera_target: vec3_t = Camera.getTarget();
     let view_matrix: math.Matrix = Matrices.make_view(Camera.position, camera_target, Camera.up);
 
-    // update transform matrix
-    let scale_matrix: math.Matrix = Matrices.make_scaler(Cube.scale[X], Cube.scale[Y], Cube.scale[Z]);
-    let translation_matrix: math.Matrix = Matrices.make_translator(Cube.translation[X], Cube.translation[Y], Cube.translation[Z]);
-    let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(Cube.rotation[X]);
-    let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(Cube.rotation[Y]);
-    let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(Cube.rotation[Z]);
-    let world_matrix: math.Matrix = mathHelper.identity(4) as math.Matrix;
-    world_matrix = mathHelper.multiply(world_matrix, scale_matrix);
-    world_matrix = mathHelper.multiply(rotation_matrix_z, world_matrix);
-    world_matrix = mathHelper.multiply(rotation_matrix_y, world_matrix);
-    world_matrix = mathHelper.multiply(rotation_matrix_x, world_matrix);
-    world_matrix = mathHelper.multiply(translation_matrix, world_matrix);
+    cubes.forEach(cube => {
+        cube.translation[Z] = 3;
 
+        // update transform matrix
+        let scale_matrix: math.Matrix = Matrices.make_scaler(cube.scale[X], cube.scale[Y], cube.scale[Z]);
+        let translation_matrix: math.Matrix = Matrices.make_translator(cube.translation[X], cube.translation[Y], cube.translation[Z]);
+        let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(cube.rotation[X]);
+        let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(cube.rotation[Y]);
+        let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(cube.rotation[Z]);
+        let world_matrix: math.Matrix = mathHelper.identity(4) as math.Matrix;
+        world_matrix = mathHelper.multiply(world_matrix, scale_matrix);
+        world_matrix = mathHelper.multiply(rotation_matrix_z, world_matrix);
+        world_matrix = mathHelper.multiply(rotation_matrix_y, world_matrix);
+        world_matrix = mathHelper.multiply(rotation_matrix_x, world_matrix);
+        world_matrix = mathHelper.multiply(translation_matrix, world_matrix);
 
-    // process every triangle in the mesh
-    for (let i = 0; i < Cube.faces.length; i++) {
+        // process every triangle in the mesh
+        for (let i = 0; i < cube.faces.length; i++) {
 
-        // get the vectors into 4d
-        // note: a "face" in this context refers to an unprocessed triangle from the mesh
-        // whereas a "triangle" is one that has been transformed
-        let face: face_t = Cube.faces[i];
-        let v0: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[0]]);
-        let v1: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[1]]);
-        let v2: vec4_t = Vector.vec3_to_vec4(Cube.vertices[face.vertexIndices[2]]);
+            // get the vectors into 4d
+            // note: a "face" in this context refers to an unprocessed triangle from the mesh
+            // whereas a "triangle" is one that has been transformed
+            let face: face_t = cube.faces[i];
+            let v0: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[0]]);
+            let v1: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[1]]);
+            let v2: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[2]]);
 
-        // apply transforms
-        let transformed_vertices: vec4_t[] = [v0, v1, v2];
-        transformed_vertices.forEach((vertex, index) => {
-            let transformed_vertex: vec4_t = mathHelper.multiply(world_matrix, vertex).valueOf() as vec4_t;
-            transformed_vertex = mathHelper.multiply(view_matrix, transformed_vertex).valueOf() as vec4_t;
-            transformed_vertices[index] = transformed_vertex;
-        });
+            // apply transforms
+            let transformed_vertices: vec4_t[] = [v0, v1, v2];
+            transformed_vertices.forEach((vertex, index) => {
+                let transformed_vertex: vec4_t = mathHelper.multiply(world_matrix, vertex).valueOf() as vec4_t;
+                transformed_vertex = mathHelper.multiply(view_matrix, transformed_vertex).valueOf() as vec4_t;
+                transformed_vertices[index] = transformed_vertex;
+            });
 
-        // culling
-        if (Renderer.cull_mode == true && shouldCull(transformed_vertices)) { continue; }
+            // culling
+            if (Renderer.cull_mode == true && shouldCull(transformed_vertices)) { continue; }
 
-        // clipping
-        let polygon: polygon_t = Clipping.createPolygonFromTriangle(
-            Vector.vec4_to_vec3(transformed_vertices[0]),
-            Vector.vec4_to_vec3(transformed_vertices[1]),
-            Vector.vec4_to_vec3(transformed_vertices[2]),
-            face.colour
-        );
-        polygon = Clipping.clipPolygon(polygon);
-        let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
+            // clipping
+            let polygon: polygon_t = Clipping.createPolygonFromTriangle(
+                Vector.vec4_to_vec3(transformed_vertices[0]),
+                Vector.vec4_to_vec3(transformed_vertices[1]),
+                Vector.vec4_to_vec3(transformed_vertices[2]),
+                face.colour
+            );
+            polygon = Clipping.clipPolygon(polygon);
+            let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
 
-        // projection
-        clipped_triangles.forEach(triangle => {
-            let projected_vertices = project(triangle.points);
-            let triangle_to_render: triangle_t = {
-                points: projected_vertices,
-                colour: face.colour,
-            };
-            triangles.push(triangle_to_render);
-        })
-
-    }
+            // projection
+            clipped_triangles.forEach(triangle => {
+                let projected_vertices = project(triangle.points);
+                let triangle_to_render: triangle_t = {
+                    points: projected_vertices,
+                    colour: face.colour,
+                };
+                triangles.push(triangle_to_render);
+            })
+        }
+    });
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -186,7 +199,17 @@ function mainloop(timestamp: number): void {
 let auto_rotate: boolean = false;
 document.addEventListener('keydown', Input.registerKeyDown);
 document.addEventListener('keyup', Input.registerKeyUp);
-// document.addEventListener('mousemove', (event: MouseEvent) => Input.handleMouseEvent(event, ts_delta));
+
+Renderer.canvas.addEventListener('click', () => {
+    Renderer.canvas.requestPointerLock();
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (document.pointerLockElement === Renderer.canvas) {
+        Input.handleMouseEvent(event, ts_delta);
+    }
+});
+
 document.getElementById('btn-auto-on')!.addEventListener('click', () => { auto_rotate = true; });
 document.getElementById('btn-auto-off')!.addEventListener('click', () => { auto_rotate = false; });
 requestAnimationFrame(mainloop);

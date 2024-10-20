@@ -4,6 +4,7 @@ import { vec3_t, VectorIndex } from "./vector";
 import { mathHelper } from "./mathHelper";
 
 export class Input {
+
     static keysDown: Record<string, boolean> = {};
     static keyAlreadyDown_1: boolean = false;
     static keyAlreadyDown_2: boolean = false;

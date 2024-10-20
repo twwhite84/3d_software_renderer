@@ -7,7 +7,8 @@ export interface face_t {
 }
 
 export class Cube {
-    static readonly vertices: vec3_t[] = [
+
+    vertices: vec3_t[] = [
         [-1.0, -1.0, 1.0],  //0
         [1.0, -1.0, 1.0],   //1
         [-1.0, 1.0, 1.0],   //2
@@ -18,7 +19,7 @@ export class Cube {
         [1.0, -1.0, -1.0]   //7
     ]
 
-    static readonly faces: face_t[] = [
+    faces: face_t[] = [
         { 'vertexIndices': [0, 1, 2], 'colour': Colour.RED },     //s1
         { 'vertexIndices': [2, 1, 3], 'colour': Colour.RED },
         { 'vertexIndices': [2, 3, 4], 'colour': Colour.GREEN },   //s2
@@ -33,9 +34,13 @@ export class Cube {
         { 'vertexIndices': [4, 0, 2], 'colour': Colour.CYAN },
     ]
 
-    static rotation: vec3_t = [0, 0, 0];
-    static scale: vec3_t = [1.0, 1.0, 1.0];
-    static translation: vec3_t = [0, 0, 0];
+    rotation: vec3_t = [0, 0, 0];
+    scale: vec3_t = [1.0, 1.0, 1.0];
+    translation: vec3_t = [0, 0, 0];
+
+    constructor(position: vec3_t) {
+        this.translation = position;
+    }
 }
 
 
