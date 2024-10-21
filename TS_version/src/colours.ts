@@ -9,4 +9,5 @@ export class Colour {
     static readonly MAGENTA: vec4_t = [255, 0, 255, 255];
     static readonly WHITE: vec4_t = [255, 255, 255, 255];
     static readonly BLACK: vec4_t = [0, 0, 0, 255];
+    static readonly BROWN: vec4_t = [165,42,42,255];
 }

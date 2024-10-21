@@ -1,5 +1,6 @@
 import { Camera } from './camera';
-import { Cube, face_t } from './cube';
+import { Cube, Pyramid, Prism } from './mesh'
+import { face_t, IMesh } from './mesh';
 import { Matrices } from './matrices';
 import { Renderer } from './renderer';
 import { Vector, VectorIndex, vec3_t, vec4_t } from './vector';
@@ -10,14 +11,10 @@ import { mathHelper } from './mathHelper';
 
 const X = VectorIndex.X, Y = VectorIndex.Y, Z = VectorIndex.Z, W = VectorIndex.W;
 
-let cubes: Cube[] = [];
-cubes.push(new Cube([-2, 0, 0]));
-cubes.push(new Cube([-2, 2, 0]));
-cubes.push(new Cube([0, 2, 0]));
-cubes.push(new Cube([2, 2, 0]));
-cubes.push(new Cube([2, 0, 0]));
-
-
+let meshes: IMesh[] = [];
+meshes.push(new Cube([-3, 0, -5]));
+meshes.push(new Pyramid([0, 0, 0]));
+meshes.push(new Prism([-7, 4, -3]));
 
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -85,6 +82,7 @@ let projection_matrix = Matrices.make_perspective(fov_y, aspect_y, z_near, z_far
 let triangles: triangle_t[] = []
 let z_buffer: number[] = []
 Clipping.initFrustumPlanes(fov_x, fov_y, z_near, z_far);
+Camera.position = [0,0,-8];
 
 function update() {
 
@@ -99,15 +97,15 @@ function update() {
     let camera_target: vec3_t = Camera.getTarget();
     let view_matrix: math.Matrix = Matrices.make_view(Camera.position, camera_target, Camera.up);
 
-    cubes.forEach(cube => {
-        cube.translation[Z] = 3;
+    meshes.forEach(mesh => {
+        // mesh.translation[Z] = 3;
 
         // update transform matrix
-        let scale_matrix: math.Matrix = Matrices.make_scaler(cube.scale[X], cube.scale[Y], cube.scale[Z]);
-        let translation_matrix: math.Matrix = Matrices.make_translator(cube.translation[X], cube.translation[Y], cube.translation[Z]);
-        let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(cube.rotation[X]);
-        let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(cube.rotation[Y]);
-        let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(cube.rotation[Z]);
+        let scale_matrix: math.Matrix = Matrices.make_scaler(mesh.scale[X], mesh.scale[Y], mesh.scale[Z]);
+        let translation_matrix: math.Matrix = Matrices.make_translator(mesh.translation[X], mesh.translation[Y], mesh.translation[Z]);
+        let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(mesh.rotation[X]);
+        let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(mesh.rotation[Y]);
+        let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(mesh.rotation[Z]);
         let world_matrix: math.Matrix = mathHelper.identity(4) as math.Matrix;
         world_matrix = mathHelper.multiply(world_matrix, scale_matrix);
         world_matrix = mathHelper.multiply(rotation_matrix_z, world_matrix);
@@ -116,15 +114,15 @@ function update() {
         world_matrix = mathHelper.multiply(translation_matrix, world_matrix);
 
         // process every triangle in the mesh
-        for (let i = 0; i < cube.faces.length; i++) {
+        for (let i = 0; i < mesh.faces.length; i++) {
 
             // get the vectors into 4d
             // note: a "face" in this context refers to an unprocessed triangle from the mesh
             // whereas a "triangle" is one that has been transformed
-            let face: face_t = cube.faces[i];
-            let v0: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[0]]);
-            let v1: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[1]]);
-            let v2: vec4_t = Vector.vec3_to_vec4(cube.vertices[face.vertexIndices[2]]);
+            let face: face_t = mesh.faces[i];
+            let v0: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[0]]);
+            let v1: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[1]]);
+            let v2: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[2]]);
 
             // apply transforms
             let transformed_vertices: vec4_t[] = [v0, v1, v2];

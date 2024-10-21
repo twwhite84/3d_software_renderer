@@ -10,6 +10,8 @@ export class Input {
     static keyAlreadyDown_2: boolean = false;
     static keyAlreadyDown_3: boolean = false;
     static keyAlreadyDown_c: boolean = false;
+    static keyAlreadyDown_i: boolean = false;
+    static yflip: number = -1;
 
     static registerKeyDown(event: KeyboardEvent): void {
         Input.keysDown[event.key] = true;
@@ -21,7 +23,7 @@ export class Input {
 
     static handleMouseEvent(event: MouseEvent, ts_delta: number) {
         Camera.yaw += event.movementX * 0.1 * ts_delta;
-        Camera.pitch -= -event.movementY * 0.1 * ts_delta;
+        Camera.pitch += event.movementY * 0.1 * ts_delta * Input.yflip;
         if (Camera.pitch > 90) Camera.pitch = 90;
         if (Camera.pitch < -90) Camera.pitch = -90;
     }
@@ -64,28 +66,13 @@ export class Input {
             Input.keyAlreadyDown_3 = false;
         }
 
-        // turn camera right
-        if (Input.keysDown['l']) {
-            Camera.rotateCameraY(1.0 * ts_delta);
+        // toggle y-axis flip
+        if (Input.keysDown['i'] && Input.keyAlreadyDown_i == false) {
+            Input.yflip =-1 * Input.yflip;
+            Input.keyAlreadyDown_i = true;
         }
-
-        // turn camera left
-        if (Input.keysDown['j']) {
-            Camera.rotateCameraY(-1.0 * ts_delta);
-        }
-
-        // tilt camera up
-        if (Input.keysDown['k']) {
-            Camera.rotateCameraX(1.0 * ts_delta);
-            let max_tilt_up: number = 89 * (Math.PI / 180);
-            if (Camera.pitch > max_tilt_up) Camera.pitch = max_tilt_up;
-        }
-
-        // tilt camera down
-        if (Input.keysDown['i']) {
-            Camera.rotateCameraX(-1.0 * ts_delta);
-            let max_tilt_down: number = -89 * (Math.PI / 180);
-            if (Camera.pitch < max_tilt_down) Camera.pitch = max_tilt_down;
+        if (!Input.keysDown['i']) {
+            Input.keyAlreadyDown_i = false;
         }
 
         // walk forward
@@ -101,7 +88,7 @@ export class Input {
         }
 
         // pan up
-        if (Input.keysDown['o']) {
+        if (Input.keysDown['e']) {
             Camera.position = [
                 Camera.position[VectorIndex.X],
                 Camera.position[VectorIndex.Y] + (3.0 * ts_delta),
@@ -110,7 +97,7 @@ export class Input {
         }
 
         // pan down
-        if (Input.keysDown['u']) {
+        if (Input.keysDown['q']) {
             Camera.position = [
                 Camera.position[VectorIndex.X],
                 Camera.position[VectorIndex.Y] - (3.0 * ts_delta),

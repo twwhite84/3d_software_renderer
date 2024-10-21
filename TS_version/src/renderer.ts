@@ -7,7 +7,6 @@ interface RenderOptions {
     vertex: boolean,
     wireframe: boolean,
     filled: boolean,
-    filled_painters: boolean
 }
 
 export class Renderer {
@@ -18,6 +17,8 @@ export class Renderer {
     static render_options: RenderOptions;
     static z_buffer: number[];
     static cull_mode: boolean;
+    
+    
 
     static {
         Renderer.canvas = document.getElementById("my-canvas") as HTMLCanvasElement
@@ -29,9 +30,8 @@ export class Renderer {
         Renderer.pixel_buffer = Renderer.image_data.data;
         Renderer.render_options = {
             vertex: false,
-            wireframe: true,
-            filled: false,
-            filled_painters: false
+            wireframe: false,
+            filled: true,
         }
         Renderer.z_buffer = Array(Renderer.canvas.width * Renderer.canvas.height).fill(1);
         Renderer.cull_mode = true;
