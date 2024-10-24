@@ -9,7 +9,7 @@ export interface triangle_t {
 
 export class Triangle {
 
-    static barycentricWeights(a: vec2_t, b: vec2_t, c: vec2_t, p: vec2_t): vec3_t {
+    static findWeights(a: vec2_t, b: vec2_t, c: vec2_t, p: vec2_t): vec3_t {
 
         // MATHJS SUBTRACT FUNCTION IS TOO SLOW HERE
         // let AC: vec2_t = mathHelper.subtract(c, a);

@@ -97,7 +97,6 @@ export class Matrices {
         let x = mathHelper.cross(up, z);
         let x_unit = mathHelper.divide(x, mathHelper.norm(x)).valueOf() as number[];
         let y = mathHelper.cross(z_unit, x_unit).valueOf() as number[];
-        // let y_unit = math.divide(z, math.norm(z)).valueOf() as number[];
         return mathHelper.matrix([
             [x_unit[0], x_unit[1], x_unit[2], -mathHelper.dot(x_unit, eye)],
             [y[0], y[1], y[2], -mathHelper.dot(y, eye)],
@@ -106,7 +105,7 @@ export class Matrices {
         ]);
     }
 
-    static mat4_mul_vec4_project(projection_matrix: math.Matrix, v: vec4_t): vec4_t {
+    static perspective_divide(projection_matrix: math.Matrix, v: vec4_t): vec4_t {
         let result: vec4_t = mathHelper.multiply(projection_matrix, v).valueOf() as vec4_t;
         let x = 0, y = 1, z = 2, w = 3;
 

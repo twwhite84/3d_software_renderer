@@ -21,7 +21,7 @@ meshes.push(new Prism([-7, 4, -3]));
 function project(vertices: vec4_t[]): vec4_t[] {
     let projected_vertices: vec4_t[] = [];
     vertices.forEach(vertex => {
-        let projected_vertex: vec4_t = Matrices.mat4_mul_vec4_project(projection_matrix, vertex);
+        let projected_vertex: vec4_t = Matrices.perspective_divide(projection_matrix, vertex);
         // scale to viewport
         projected_vertex[X] *= (Renderer.canvas.width / 2.0);
         projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
@@ -82,15 +82,15 @@ let projection_matrix = Matrices.make_perspective(fov_y, aspect_y, z_near, z_far
 let triangles: triangle_t[] = []
 let z_buffer: number[] = []
 Clipping.initFrustumPlanes(fov_x, fov_y, z_near, z_far);
-Camera.position = [0,0,-8];
+Camera.position = [0, 0, -8];
 
 function update() {
 
     // update the values on the mesh you want to transform here
     if (auto_rotate) {
-        //     Cube.rotation[X] += 0.5 * ts_delta;
-        //     Cube.rotation[Y] += 0.5 * ts_delta;
-        Camera.rotateCameraY(0.1);
+        meshes.forEach(mesh => {
+            mesh.rotation[Y] += 0.01;
+        });
     }
 
     // update view matrix

@@ -17,8 +17,6 @@ export class Renderer {
     static render_options: RenderOptions;
     static z_buffer: number[];
     static cull_mode: boolean;
-    
-    
 
     static {
         Renderer.canvas = document.getElementById("my-canvas") as HTMLCanvasElement
@@ -64,14 +62,14 @@ export class Renderer {
 
     // DDA algorithm, this isn't efficient
     static drawLine(x0: number, y0: number, x1: number, y1: number, colour: vec4_t) {
-        let delta_x = (x1 - x0);
-        let delta_y = (y1 - y0);
-        let longest_side_length = (Math.abs(delta_x) >= Math.abs(delta_y)) ? Math.abs(delta_x) : Math.abs(delta_y);
-        let x_inc = delta_x / longest_side_length;
-        let y_inc = delta_y / longest_side_length;
+        let dx = (x1 - x0);
+        let dy = (y1 - y0);
+        let longest_side_length = (Math.abs(dx) >= Math.abs(dy)) ? Math.abs(dx) : Math.abs(dy);
+        let x_inc = dx / longest_side_length;
+        let y_inc = dy / longest_side_length;
         let current_x = x0;
         let current_y = y0;
-        for (let i = 0; i <= longest_side_length; i++) {
+        for (let i = 0; i <= Math.round(longest_side_length); i++) {
             Renderer.drawPixel(Math.round(current_x), Math.round(current_y), colour);
             current_x += x_inc;
             current_y += y_inc;
@@ -146,9 +144,10 @@ export class Renderer {
                 }
 
                 for (let x = x_start; x < x_end; x++) {
+
                     // get depth info for pixel
                     let p: vec2_t = [x, y];
-                    let weights: vec3_t = Triangle.barycentricWeights(
+                    let weights: vec3_t = Triangle.findWeights(
                         [a[VectorIndex.X], a[VectorIndex.Y]],
                         [b[VectorIndex.X], b[VectorIndex.Y]],
                         [c[VectorIndex.X], c[VectorIndex.Y]],
@@ -158,7 +157,7 @@ export class Renderer {
                     let beta: number = weights[VectorIndex.Y];
                     let gamma: number = weights[VectorIndex.Z];
                     let interp_recp_w: number = 1 - (
-                        (1 / a[VectorIndex.W]) * alpha + (1 / b[VectorIndex.W]) * beta + (1 / c[VectorIndex.W]) * gamma
+                        (alpha / a[VectorIndex.W]) + (beta / b[VectorIndex.W]) + (gamma / c[VectorIndex.W])
                     );
 
                     // redraw pixel if this one is closer to camera
@@ -184,9 +183,10 @@ export class Renderer {
                 }
 
                 for (let x = x_start; x < x_end; x++) {
+
                     // get depth info for pixel
                     let p: vec2_t = [x, y];
-                    let weights: vec3_t = Triangle.barycentricWeights(
+                    let weights: vec3_t = Triangle.findWeights(
                         [a[VectorIndex.X], a[VectorIndex.Y]],
                         [b[VectorIndex.X], b[VectorIndex.Y]],
                         [c[VectorIndex.X], c[VectorIndex.Y]],
@@ -197,7 +197,7 @@ export class Renderer {
                     let gamma: number = weights[VectorIndex.Z];
 
                     let interp_recp_w: number = 1 - (
-                        (1 / a[VectorIndex.W]) * alpha + (1 / b[VectorIndex.W]) * beta + (1 / c[VectorIndex.W]) * gamma
+                        (alpha / a[VectorIndex.W]) + (beta / b[VectorIndex.W]) + (gamma / c[VectorIndex.W])
                     );
 
                     // redraw pixel if this one is closer to camera

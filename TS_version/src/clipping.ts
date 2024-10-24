@@ -29,7 +29,7 @@ export class Clipping {
     static readonly NUM_PLANES = 6;
     static frustum_planes: plane_t[] = Array(Clipping.NUM_PLANES);
 
-    static floatLerp(a: number, b: number, t: number): number {
+    static lerp(a: number, b: number, t: number): number {
         let result: number = a + t * (b - a);
         return result;
     }
@@ -127,9 +127,9 @@ export class Clipping {
 
                 // calculate intersection point I = Q1 + t(Q2-Q1)
                 let intersection_point: vec3_t = [
-                    Clipping.floatLerp(previous_vertex[VectorIndex.X], current_vertex[VectorIndex.X], t),
-                    Clipping.floatLerp(previous_vertex[VectorIndex.Y], current_vertex[VectorIndex.Y], t),
-                    Clipping.floatLerp(previous_vertex[VectorIndex.Z], current_vertex[VectorIndex.Z], t)
+                    Clipping.lerp(previous_vertex[VectorIndex.X], current_vertex[VectorIndex.X], t),
+                    Clipping.lerp(previous_vertex[VectorIndex.Y], current_vertex[VectorIndex.Y], t),
+                    Clipping.lerp(previous_vertex[VectorIndex.Z], current_vertex[VectorIndex.Z], t)
                 ];
 
                 // insert intersection point into list of "inside vertices"

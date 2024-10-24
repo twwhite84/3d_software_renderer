@@ -67,3 +67,9 @@ td:first-child {
     text-align: center;
     font-weight: bold;
 }
+
+.text-container {
+    color: yellow;
+    text-shadow: 3px 3px rgba(0, 0, 0, 1);
+    font-family: sans-serif;
+}

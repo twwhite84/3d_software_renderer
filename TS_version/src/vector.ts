@@ -7,7 +7,7 @@ export enum VectorIndex {
     Y = 1,
     Z = 2,
     W = 3
-}
+}   
 
 export class Vector {
     static vec3_to_vec4(vec3: vec3_t): vec4_t {
