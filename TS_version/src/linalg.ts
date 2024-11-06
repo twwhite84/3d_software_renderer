@@ -97,6 +97,15 @@ export function norm_v3d(v: vec3_t): number {
     return result;
 }
 
+export function normalise_v3d(v: vec3_t): vec3_t {
+    let result: vec3_t = [0, 0, 0];
+    let v_mag = norm_v3d(v);
+    result[X] = v[X] / v_mag;
+    result[Y] = v[Y] / v_mag;
+    result[Z] = v[Z] / v_mag;
+    return result;
+}
+
 export function cross_v3d(v1: vec3_t, v2: vec3_t): vec3_t {
     let result: vec3_t = [0, 0, 0];
     result[X] = v1[Y] * v2[Z] - v1[Z] * v2[Y];

@@ -1,6 +1,6 @@
 import { Main } from './main';
 import { Renderer } from "./renderer";
-import { add_v3d, mult_v3d_s, X, Y, Z } from "./linalg";
+import { add_v3d, mult_v3d_s, normalise_v3d, vec3_t, X, Y, Z } from "./linalg";
 
 export class Input {
 
@@ -110,14 +110,14 @@ export class Input {
         // strafe left
         if (Input.keysDown['a']) {
             camera.setPosition(
-                add_v3d(camera.getPosition(), mult_v3d_s(camera.getRight(), 3.0 * ts_delta))
+                add_v3d(camera.getPosition(), mult_v3d_s(normalise_v3d(camera.getRight()), 3.0 * ts_delta))
             );
         }
 
         // strafe right
         if (Input.keysDown['d']) {
             camera.setPosition(
-                add_v3d(camera.getPosition(), mult_v3d_s(camera.getRight(), -3.0 * ts_delta))
+                add_v3d(camera.getPosition(), mult_v3d_s(normalise_v3d(camera.getRight()), -3.0 * ts_delta))
             );
         }
     }

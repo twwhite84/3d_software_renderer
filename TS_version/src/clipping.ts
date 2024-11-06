@@ -1,16 +1,16 @@
 import { triangle_t } from "./triangle";
 import { dot_v3d, sub_v3d, v3d_to_v4d, vec2_t, vec3_t, vec4_t, X, Y, Z } from "./linalg";
 
-export enum FrustumPlanes {
-    LEFT_FRUSTUM_PLANE,
-    RIGHT_FRUSTUM_PLANE,
-    TOP_FRUSTUM_PLANE,
-    BOTTOM_FRUSTUM_PLANE,
-    NEAR_FRUSTUM_PLANE,
-    FAR_FRUSTUM_PLANE
+enum FrustumPlanes {
+    LEFT,
+    RIGHT,
+    TOP,
+    BOTTOM,
+    NEAR,
+    FAR
 }
 
-export interface plane_t {
+interface plane_t {
     point: vec3_t;
     normal: vec3_t;
 }
@@ -22,49 +22,46 @@ export interface polygon_t {
 };
 
 export class Clipping {
-    private static readonly MAX_NUM_POLY_VERTICES = 10
-    private static readonly MAX_NUM_POLY_TRIANGLES = 10
-    private static readonly NUM_PLANES = 6;
-    private static frustum_planes: plane_t[] = Array(Clipping.NUM_PLANES);
+    private static frustum_planes: plane_t[] = Array(6);
 
     private static lerp(a: number, b: number, t: number): number {
         let result: number = a + t * (b - a);
         return result;
     }
 
-    public static initFrustumPlanes(fovx: number, fovy: number, z_near: number, z_far: number): void {
-        let cos_half_fovx: number = Math.cos(fovx / 2);
-        let sin_half_fovx: number = Math.sin(fovx / 2);
-        let cos_half_fovy: number = Math.cos(fovy / 2);
-        let sin_half_fovy: number = Math.sin(fovy / 2);
+    public static initFrustumPlanes(fov_x: number, fov_y: number, z_near: number, z_far: number): void {
+        let cos_half_fovx: number = Math.cos(fov_x / 2);
+        let sin_half_fovx: number = Math.sin(fov_x / 2);
+        let cos_half_fovy: number = Math.cos(fov_y / 2);
+        let sin_half_fovy: number = Math.sin(fov_y / 2);
         let origin: vec3_t = [0, 0, 0];
 
-        Clipping.frustum_planes[FrustumPlanes.LEFT_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.LEFT] = {
             'point': origin,
             'normal': [cos_half_fovx, 0, sin_half_fovx]
         }
 
-        Clipping.frustum_planes[FrustumPlanes.RIGHT_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.RIGHT] = {
             'point': origin,
             'normal': [-cos_half_fovx, 0, sin_half_fovx]
         }
 
-        Clipping.frustum_planes[FrustumPlanes.TOP_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.TOP] = {
             'point': origin,
             'normal': [0, -cos_half_fovy, sin_half_fovy]
         }
 
-        Clipping.frustum_planes[FrustumPlanes.BOTTOM_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.BOTTOM] = {
             'point': origin,
             'normal': [0, cos_half_fovy, sin_half_fovy]
         }
 
-        Clipping.frustum_planes[FrustumPlanes.NEAR_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.NEAR] = {
             'point': [0, 0, z_near],
             'normal': [0, 0, 1]
         }
 
-        Clipping.frustum_planes[FrustumPlanes.FAR_FRUSTUM_PLANE] = {
+        Clipping.frustum_planes[FrustumPlanes.FAR] = {
             'point': [0, 0, z_far],
             'normal': [0, 0, -1]
         }
@@ -80,12 +77,12 @@ export class Clipping {
     }
 
     public static clipPolygon(polygon: polygon_t): polygon_t {
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.LEFT_FRUSTUM_PLANE);
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.RIGHT_FRUSTUM_PLANE);
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.TOP_FRUSTUM_PLANE);
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.BOTTOM_FRUSTUM_PLANE);
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.NEAR_FRUSTUM_PLANE);
-        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.FAR_FRUSTUM_PLANE);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.LEFT);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.RIGHT);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.TOP);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.BOTTOM);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.NEAR);
+        polygon = Clipping.clipPolygonAgainstPlane(polygon, FrustumPlanes.FAR);
         return polygon;
     }
 

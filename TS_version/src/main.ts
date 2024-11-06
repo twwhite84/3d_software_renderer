@@ -82,7 +82,7 @@ export class Main {
 
     private static update() {
         // update camera
-        let camera_target: vec3_t = Main.camera.getTarget();
+        let camera_target: vec3_t = Main.camera.findTarget();
         let view_matrix: mtx4_t = Matrices.make_view(Main.camera.getPosition(), camera_target, Main.camera.getUp());
 
         Main.meshes.forEach(mesh => {
