@@ -1,4 +1,4 @@
-import { vec4_t } from "./vector";
+import { vec4_t } from "./linalg";
 
 export class Colour {
     static readonly RED: vec4_t = [255, 0, 0, 255];

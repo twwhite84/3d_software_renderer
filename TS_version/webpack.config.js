@@ -10,13 +10,17 @@ module.exports = {
         static: './dist',
     },
     plugins: [
-        new HtmlWebpackPlugin({
-            template: './src/index.html'
-        }),
+        // new HtmlWebpackPlugin({
+        //     template: './src/index.html'
+        // }),
         new CopyPlugin({
             patterns: [
                 {
                     from: "./src/*.css",
+                    to: "[name][ext]"
+                },
+                {
+                    from: "./src/*.html",
                     to: "[name][ext]"
                 },
             ],

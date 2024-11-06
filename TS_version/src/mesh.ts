@@ -1,13 +1,12 @@
-import { vec3_t, vec4_t } from "./vector"
 import { Colour } from "./colours";
+import { vec3_t, vec4_t } from "./linalg";
 
 export interface face_t {
     vertexIndices: vec3_t,
     colour: vec4_t
 }
 
-// anti-clockwise vertices
-export interface IMesh {
+export interface Mesh {
     vertices: vec3_t[];
     faces: face_t[];
     rotation: vec3_t;
@@ -17,7 +16,7 @@ export interface IMesh {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-export class Cube implements IMesh {
+export class Cube implements Mesh {
 
     vertices: vec3_t[] = [
         [-1.0, -1.0, 1.0],  //0
@@ -56,21 +55,21 @@ export class Cube implements IMesh {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-export class Pyramid implements IMesh {
+export class Pyramid implements Mesh {
 
     vertices: vec3_t[] = [
-        [-1, -1, 1],     // 0
-        [1, -1, 1],      // 1
+        [-1, -1, 1],    // 0
+        [1, -1, 1],     // 1
         [0, 1, 0],      // 2
-        [1, -1, -1],     // 3
-        [-1, -1, -1],    // 4
+        [1, -1, -1],    // 3
+        [-1, -1, -1],   // 4
     ]
 
     faces: face_t[] = [
         { 'vertexIndices': [0, 1, 2], 'colour': Colour.RED },       //1
         { 'vertexIndices': [1, 3, 2], 'colour': Colour.GREEN },     //2
         { 'vertexIndices': [4, 0, 2], 'colour': Colour.BLUE },      //3
-        { 'vertexIndices': [3, 4, 2], 'colour': Colour.MAGENTA },    //4
+        { 'vertexIndices': [3, 4, 2], 'colour': Colour.MAGENTA },   //4
         { 'vertexIndices': [3, 1, 0], 'colour': Colour.MAGENTA },   //5
         { 'vertexIndices': [4, 3, 0], 'colour': Colour.MAGENTA },   //6
     ]
@@ -86,16 +85,16 @@ export class Pyramid implements IMesh {
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-export class Prism implements IMesh {
+export class Prism implements Mesh {
 
     vertices: vec3_t[] = [
-        [-1, -5, 1], 
-        [1, -5, 1], 
-        [-1, 5, 1], 
-        [1, 5, 1], 
-        [-1, 5, -1], 
-        [1, 5, -1], 
-        [-1, -5, -1], 
+        [-1, -5, 1],
+        [1, -5, 1],
+        [-1, 5, 1],
+        [1, 5, 1],
+        [-1, 5, -1],
+        [1, 5, -1],
+        [-1, -5, -1],
         [1, -5, -1]
     ]
 
@@ -112,6 +111,30 @@ export class Prism implements IMesh {
         { 'vertexIndices': [3, 7, 5], 'colour': Colour.MAGENTA },
         { 'vertexIndices': [6, 0, 4], 'colour': Colour.CYAN },    //s6
         { 'vertexIndices': [4, 0, 2], 'colour': Colour.CYAN },
+    ]
+
+    rotation: vec3_t = [0, 0, 0];
+    scale: vec3_t = [1.0, 1.0, 1.0];
+    translation: vec3_t = [0, 0, 0];
+
+    constructor(position: vec3_t) {
+        this.translation = position;
+    }
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+export class Ground implements Mesh {
+    vertices: vec3_t[] = [
+        [-10, 0, -10],
+        [10, 0, -10],
+        [10, 0, 10],
+        [-10, 0, 10]
+    ];
+
+    faces: face_t[] = [
+        { 'vertexIndices': [2, 1, 0], 'colour': Colour.BROWN },
+        { 'vertexIndices': [3, 2, 0], 'colour': Colour.BROWN },
     ]
 
     rotation: vec3_t = [0, 0, 0];

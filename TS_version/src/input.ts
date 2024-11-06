@@ -1,34 +1,36 @@
-import { Camera } from "./camera";
+import { Main } from './main';
 import { Renderer } from "./renderer";
-import { vec3_t, VectorIndex } from "./vector";
-import { mathHelper } from "./mathHelper";
+import { add_v3d, mult_v3d_s, X, Y, Z } from "./linalg";
 
 export class Input {
 
-    static keysDown: Record<string, boolean> = {};
-    static keyAlreadyDown_1: boolean = false;
-    static keyAlreadyDown_2: boolean = false;
-    static keyAlreadyDown_3: boolean = false;
-    static keyAlreadyDown_c: boolean = false;
-    static keyAlreadyDown_i: boolean = false;
-    static yflip: number = -1;
+    private static keysDown: Record<string, boolean> = {};
+    private static keyAlreadyDown_1: boolean = false;
+    private static keyAlreadyDown_2: boolean = false;
+    private static keyAlreadyDown_3: boolean = false;
+    private static keyAlreadyDown_c: boolean = false;
+    private static keyAlreadyDown_i: boolean = false;
+    private static yflip: number = -1;
 
-    static registerKeyDown(event: KeyboardEvent): void {
+    public static registerKeyDown(event: KeyboardEvent): void {
         Input.keysDown[event.key] = true;
     }
 
-    static registerKeyUp(event: KeyboardEvent): void {
+    public static registerKeyUp(event: KeyboardEvent): void {
         Input.keysDown[event.key] = false;
     }
 
-    static handleMouseEvent(event: MouseEvent, ts_delta: number) {
-        Camera.yaw += event.movementX * 0.1 * ts_delta;
-        Camera.pitch += event.movementY * 0.1 * ts_delta * Input.yflip;
-        if (Camera.pitch > 90) Camera.pitch = 90;
-        if (Camera.pitch < -90) Camera.pitch = -90;
+    public static handleMouseEvent(event: MouseEvent, ts_delta: number) {
+        const camera = Main.getCamera();
+        camera.setYaw(camera.getYaw() + event.movementX * 0.1 * ts_delta);
+        camera.setPitch(camera.getPitch() + event.movementY * 0.1 * ts_delta * Input.yflip);
+        let y_clamp: number = (89 * Math.PI) / 180;
+        if (camera.getPitch() > y_clamp) camera.setPitch(y_clamp);
+        if (camera.getPitch() < -y_clamp) camera.setPitch(-y_clamp);
     }
 
-    static processInput(ts_delta: number) {
+    public static processInput(ts_delta: number) {
+        const camera = Main.getCamera();
 
         // toggle backface culling
         if (Input.keysDown['c'] && Input.keyAlreadyDown_c == false) {
@@ -68,7 +70,7 @@ export class Input {
 
         // toggle y-axis flip
         if (Input.keysDown['i'] && Input.keyAlreadyDown_i == false) {
-            Input.yflip =-1 * Input.yflip;
+            Input.yflip = -1 * Input.yflip;
             Input.keyAlreadyDown_i = true;
         }
         if (!Input.keysDown['i']) {
@@ -77,46 +79,46 @@ export class Input {
 
         // walk forward
         if (Input.keysDown['w']) {
-            Camera.forward_velocity = mathHelper.multiply(Camera.direction, 1.0 * ts_delta).valueOf() as vec3_t;
-            Camera.position = mathHelper.add(Camera.position, Camera.forward_velocity);
+            camera.setForwardVelocity(mult_v3d_s(camera.getDirection(), 1.0 * ts_delta));
+            camera.setPosition(add_v3d(camera.getPosition(), camera.getForwardVelocity()));
         }
 
         // walk backward
         if (Input.keysDown['s']) {
-            Camera.forward_velocity = mathHelper.multiply(Camera.direction, -1.0 * ts_delta).valueOf() as vec3_t;
-            Camera.position = mathHelper.add(Camera.position, Camera.forward_velocity);
+            camera.setForwardVelocity(mult_v3d_s(camera.getDirection(), -1.0 * ts_delta));
+            camera.setPosition(add_v3d(camera.getPosition(), camera.getForwardVelocity()));
         }
 
         // pan up
         if (Input.keysDown['e']) {
-            Camera.position = [
-                Camera.position[VectorIndex.X],
-                Camera.position[VectorIndex.Y] + (3.0 * ts_delta),
-                Camera.position[VectorIndex.Z]
-            ];
+            camera.setPosition([
+                camera.getPosition()[X],
+                camera.getPosition()[Y] + (3.0 * ts_delta),
+                camera.getPosition()[Z]
+            ]);
         }
 
         // pan down
         if (Input.keysDown['q']) {
-            Camera.position = [
-                Camera.position[VectorIndex.X],
-                Camera.position[VectorIndex.Y] - (3.0 * ts_delta),
-                Camera.position[VectorIndex.Z]
-            ];
+            camera.setPosition([
+                camera.getPosition()[X],
+                camera.getPosition()[Y] - (3.0 * ts_delta),
+                camera.getPosition()[Z]
+            ]);
         }
 
         // strafe left
         if (Input.keysDown['a']) {
-            Camera.position = mathHelper.add(
-                Camera.position, mathHelper.multiply(Camera.right, 3.0 * ts_delta)
-            ).valueOf() as vec3_t;
+            camera.setPosition(
+                add_v3d(camera.getPosition(), mult_v3d_s(camera.getRight(), 3.0 * ts_delta))
+            );
         }
 
         // strafe right
         if (Input.keysDown['d']) {
-            Camera.position = mathHelper.add(
-                Camera.position, mathHelper.multiply(Camera.right, -3.0 * ts_delta)
-            ).valueOf() as vec3_t;
+            camera.setPosition(
+                add_v3d(camera.getPosition(), mult_v3d_s(camera.getRight(), -3.0 * ts_delta))
+            );
         }
     }
 }

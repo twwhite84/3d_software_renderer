@@ -1,7 +1,6 @@
 import { Colour } from './colours';
+import { vec2_t, vec3_t, vec4_t, W, X, Y, Z } from './linalg';
 import { triangle_t, Triangle } from './triangle';
-import { vec2_t, vec3_t, vec4_t, Vector, VectorIndex } from './vector';
-import { mathHelper } from './mathHelper';
 
 interface RenderOptions {
     vertex: boolean,
@@ -20,7 +19,7 @@ export class Renderer {
 
     static {
         Renderer.canvas = document.getElementById("my-canvas") as HTMLCanvasElement
-        Renderer.canvas.style.background = 'lightgrey';
+        Renderer.canvas.style.background = 'black';
         Renderer.canvas.width = 320;
         Renderer.canvas.height = 200;
         Renderer.context = Renderer.canvas.getContext('2d')!;
@@ -77,30 +76,30 @@ export class Renderer {
     }
 
     static drawTriangle(triangle: triangle_t) {
-        let x0: number = triangle.points[0][VectorIndex.X];
-        let y0: number = triangle.points[0][VectorIndex.Y];
-        let x1: number = triangle.points[1][VectorIndex.X];
-        let y1: number = triangle.points[1][VectorIndex.Y];
-        let x2: number = triangle.points[2][VectorIndex.X];
-        let y2: number = triangle.points[2][VectorIndex.Y];
+        let x0: number = triangle.points[0][X];
+        let y0: number = triangle.points[0][Y];
+        let x1: number = triangle.points[1][X];
+        let y1: number = triangle.points[1][Y];
+        let x2: number = triangle.points[2][X];
+        let y2: number = triangle.points[2][Y];
         Renderer.drawLine(x0, y0, x1, y1, Colour.BLACK);
         Renderer.drawLine(x1, y1, x2, y2, Colour.BLACK);
         Renderer.drawLine(x2, y2, x0, y0, Colour.BLACK);
     }
 
     static fillTriangle(triangle: triangle_t) {
-        let x0: number = Math.round(triangle.points[0][VectorIndex.X]);
-        let y0: number = Math.round(triangle.points[0][VectorIndex.Y]);
-        let z0: number = triangle.points[0][VectorIndex.Z];
-        let w0: number = triangle.points[0][VectorIndex.W];
-        let x1: number = Math.round(triangle.points[1][VectorIndex.X]);
-        let y1: number = Math.round(triangle.points[1][VectorIndex.Y]);
-        let z1: number = triangle.points[1][VectorIndex.Z];
-        let w1: number = triangle.points[1][VectorIndex.W];
-        let x2: number = Math.round(triangle.points[2][VectorIndex.X]);
-        let y2: number = Math.round(triangle.points[2][VectorIndex.Y]);
-        let z2: number = triangle.points[2][VectorIndex.Z];
-        let w2: number = triangle.points[2][VectorIndex.W];
+        let x0: number = Math.round(triangle.points[0][X]);
+        let y0: number = Math.round(triangle.points[0][Y]);
+        let z0: number = triangle.points[0][Z];
+        let w0: number = triangle.points[0][W];
+        let x1: number = Math.round(triangle.points[1][X]);
+        let y1: number = Math.round(triangle.points[1][Y]);
+        let z1: number = triangle.points[1][Z];
+        let w1: number = triangle.points[1][W];
+        let x2: number = Math.round(triangle.points[2][X]);
+        let y2: number = Math.round(triangle.points[2][Y]);
+        let z2: number = triangle.points[2][Z];
+        let w2: number = triangle.points[2][W];
 
         // sort vertices by y-axis
         if (y0 > y1) {
@@ -148,16 +147,16 @@ export class Renderer {
                     // get depth info for pixel
                     let p: vec2_t = [x, y];
                     let weights: vec3_t = Triangle.findWeights(
-                        [a[VectorIndex.X], a[VectorIndex.Y]],
-                        [b[VectorIndex.X], b[VectorIndex.Y]],
-                        [c[VectorIndex.X], c[VectorIndex.Y]],
+                        [a[X], a[Y]],
+                        [b[X], b[Y]],
+                        [c[X], c[Y]],
                         p
                     );
-                    let alpha: number = weights[VectorIndex.X];
-                    let beta: number = weights[VectorIndex.Y];
-                    let gamma: number = weights[VectorIndex.Z];
+                    let alpha: number = weights[X];
+                    let beta: number = weights[Y];
+                    let gamma: number = weights[Z];
                     let interp_recp_w: number = 1 - (
-                        (alpha / a[VectorIndex.W]) + (beta / b[VectorIndex.W]) + (gamma / c[VectorIndex.W])
+                        (alpha / a[W]) + (beta / b[W]) + (gamma / c[W])
                     );
 
                     // redraw pixel if this one is closer to camera
@@ -187,17 +186,17 @@ export class Renderer {
                     // get depth info for pixel
                     let p: vec2_t = [x, y];
                     let weights: vec3_t = Triangle.findWeights(
-                        [a[VectorIndex.X], a[VectorIndex.Y]],
-                        [b[VectorIndex.X], b[VectorIndex.Y]],
-                        [c[VectorIndex.X], c[VectorIndex.Y]],
+                        [a[X], a[Y]],
+                        [b[X], b[Y]],
+                        [c[X], c[Y]],
                         p
                     );
-                    let alpha: number = weights[VectorIndex.X];
-                    let beta: number = weights[VectorIndex.Y];
-                    let gamma: number = weights[VectorIndex.Z];
+                    let alpha: number = weights[X];
+                    let beta: number = weights[Y];
+                    let gamma: number = weights[Z];
 
                     let interp_recp_w: number = 1 - (
-                        (alpha / a[VectorIndex.W]) + (beta / b[VectorIndex.W]) + (gamma / c[VectorIndex.W])
+                        (alpha / a[W]) + (beta / b[W]) + (gamma / c[W])
                     );
 
                     // redraw pixel if this one is closer to camera
@@ -219,14 +218,14 @@ export class Renderer {
 
         // paint vertices
         if (Renderer.render_options.vertex == true) {
-            let x = Math.round(triangle.points[0][VectorIndex.X] - 2);
-            let y = Math.round(triangle.points[0][VectorIndex.Y] - 2);
+            let x = Math.round(triangle.points[0][X] - 2);
+            let y = Math.round(triangle.points[0][Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
-            x = Math.round(triangle.points[1][VectorIndex.X] - 2);
-            y = Math.round(triangle.points[1][VectorIndex.Y] - 2);
+            x = Math.round(triangle.points[1][X] - 2);
+            y = Math.round(triangle.points[1][Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
-            x = Math.round(triangle.points[2][VectorIndex.X] - 2);
-            y = Math.round(triangle.points[2][VectorIndex.Y] - 2);
+            x = Math.round(triangle.points[2][X] - 2);
+            y = Math.round(triangle.points[2][Y] - 2);
             Renderer.drawVertex(x, y, 4, Colour.BLACK);
         }
 

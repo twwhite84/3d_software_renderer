@@ -1,213 +1,192 @@
 import { Camera } from './camera';
-import { Cube, Pyramid, Prism } from './mesh'
-import { face_t, IMesh } from './mesh';
-import { Matrices } from './matrices';
-import { Renderer } from './renderer';
-import { Vector, VectorIndex, vec3_t, vec4_t } from './vector';
 import { Clipping, polygon_t } from './clipping';
 import { Input } from './input';
+import { mtx4_t, vec3_t, vec4_t, X, Y, Z, eye_m4d } from './linalg';
+import { cross_v3d, div_v3d_s, dot_m4d, dot_m4d_v4d, dot_v3d, norm_v3d, sub_v3d, v3d_to_v4d, v4d_to_v3d } from './linalg';
+import { Matrices } from './matrices';
+import { Cube, face_t, Ground, Mesh, Prism, Pyramid } from './mesh';
+import { Renderer } from './renderer';
 import { triangle_t } from './triangle';
-import { mathHelper } from './mathHelper';
 
-const X = VectorIndex.X, Y = VectorIndex.Y, Z = VectorIndex.Z, W = VectorIndex.W;
+export class Main {
+    private static meshes: Mesh[] = [];
+    private static aspect_x: number = 0;
+    private static aspect_y: number = 0;
+    private static fov_x: number = 0;
+    private static fov_y: number = 0;
+    private static z_near: number = 0;
+    private static z_far: number = 0;
+    private static projection_matrix: mtx4_t = eye_m4d;
+    private static triangles: triangle_t[] = [];
+    private static ts: number = 0;
+    private static ts_delta: number = 0;
+    private static ts_old: number = 0;
+    private static camera: Camera = new Camera();
 
-let meshes: IMesh[] = [];
-meshes.push(new Cube([-3, 0, -5]));
-meshes.push(new Pyramid([0, 0, 0]));
-meshes.push(new Prism([-7, 4, -3]));
+    private static init() {
+        Main.meshes.push(new Cube([-3, 0, -5]));
+        Main.meshes.push(new Pyramid([0, 0, 0]));
+        Main.meshes.push(new Prism([-7, 4, -3]));
+        Main.meshes.push(new Ground([0, -1, 0]));
 
-// ---------------------------------------------------------------------------------------------------------------
+        Main.aspect_y = Renderer.canvas.height / Renderer.canvas.width;
+        Main.aspect_x = Renderer.canvas.width / Renderer.canvas.height;
+        Main.fov_y = 90 * (Math.PI / 180);
+        Main.fov_x = 2.0 * Math.atan(Math.tan(Main.fov_y / 2) * (Main.aspect_x));
+        Main.z_near = 0.1;
+        Main.z_far = 20.0;
+        Main.projection_matrix = Matrices.make_perspective(Main.fov_y, Main.aspect_y, Main.z_near, Main.z_far);
+        Main.triangles = [];
+        Clipping.initFrustumPlanes(Main.fov_x, Main.fov_y, Main.z_near, Main.z_far);
+        Main.camera.setPosition([0, 0, -8]);
+    }
 
-function project(vertices: vec4_t[]): vec4_t[] {
-    let projected_vertices: vec4_t[] = [];
-    vertices.forEach(vertex => {
-        let projected_vertex: vec4_t = Matrices.perspective_divide(projection_matrix, vertex);
-        // scale to viewport
-        projected_vertex[X] *= (Renderer.canvas.width / 2.0);
-        projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
-        // account for y-positive being down not up
-        projected_vertex[Y] *= -1;
-        // center
-        projected_vertex[X] += (Renderer.canvas.width / 2.0);
-        projected_vertex[Y] += (Renderer.canvas.height / 2.0);
+    private static project(vertices: vec4_t[]): vec4_t[] {
+        let projected_vertices: vec4_t[] = [];
+        vertices.forEach(vertex => {
+            let projected_vertex: vec4_t = Matrices.perspective_divide(Main.projection_matrix, vertex);
+            // scale to viewport
+            projected_vertex[X] *= (Renderer.canvas.width / 2.0);
+            projected_vertex[Y] *= (Renderer.canvas.height / 2.0);
+            // account for 2D pixel coordinates having inverse y-axis
+            projected_vertex[Y] *= -1;
+            // center
+            projected_vertex[X] += (Renderer.canvas.width / 2.0);
+            projected_vertex[Y] += (Renderer.canvas.height / 2.0);
 
-        projected_vertices.push(projected_vertex);
-    });
-    return projected_vertices;
-}
+            projected_vertices.push(projected_vertex);
+        });
+        return projected_vertices;
+    }
 
-/*--------------------------------------------------------------------------------------------------------------------*/
+    private static shouldCull(vertices: vec4_t[]): boolean {
+        // clockwise ordering, renderer is LHCS
+        let a: vec3_t = v4d_to_v3d(vertices[0]);
+        let b: vec3_t = v4d_to_v3d(vertices[1]);
+        let c: vec3_t = v4d_to_v3d(vertices[2]);
 
-/**
- * Determines whether triangle front face is angled out of camera view.
- */
-function shouldCull(vertices: vec4_t[]): boolean {
-    // 1. normalise vectors B-A and C-A (clockwise because we use LHCS)
-    //     A
-    //    / \
-    //   C---B
-    let a: vec3_t = Vector.vec4_to_vec3(vertices[0]);
-    let b: vec3_t = Vector.vec4_to_vec3(vertices[1]);
-    let c: vec3_t = Vector.vec4_to_vec3(vertices[2]);
-    let ab: vec3_t = mathHelper.subtract(b, a);
-    let ac: vec3_t = mathHelper.subtract(c, a);
-    ab = mathHelper.divide(ab, mathHelper.norm(ab)).valueOf() as vec3_t;
-    ac = mathHelper.divide(ac, mathHelper.norm(ac)).valueOf() as vec3_t;
+        // get normal to triangle
+        let ab: vec3_t = sub_v3d(b, a);
+        let ac: vec3_t = sub_v3d(c, a);
+        ab = div_v3d_s(ab, norm_v3d(ab));
+        ac = div_v3d_s(ac, norm_v3d(ac));
+        let normal: vec3_t = cross_v3d(ab, ac);
+        normal = div_v3d_s(normal, norm_v3d(normal));
 
-    // 2. find the outward normal to the triangle
-    let normal: vec3_t = mathHelper.cross(ab, ac).valueOf() as vec3_t;
-    normal = mathHelper.divide(normal, mathHelper.norm(normal)).valueOf() as vec3_t;
+        // check alignment between camera-to-vertex and normal
+        let camera_ray: vec3_t = sub_v3d([0, 0, 0], a);
+        let dot_normal_camera: number = dot_v3d(normal, camera_ray);
+        if (dot_normal_camera < 0) { return true; }
+        return false;
+    }
 
-    // 3. find camera ray vector. origin is relative to camera position.
-    let origin: vec3_t = [0, 0, 0];
-    let camera_ray: vec3_t = mathHelper.subtract(origin, a);
+    private static update() {
+        // update camera
+        let camera_target: vec3_t = Main.camera.getTarget();
+        let view_matrix: mtx4_t = Matrices.make_view(Main.camera.getPosition(), camera_target, Main.camera.getUp());
 
-    // 4. take dot product between normal N and camera ray
-    let dot_normal_camera: number = mathHelper.dot(normal, camera_ray);
+        Main.meshes.forEach(mesh => {
+            // prepare transform matrix from any updated mesh properties
+            let scale_matrix: mtx4_t = Matrices.make_scaler(mesh.scale[X], mesh.scale[Y], mesh.scale[Z]);
+            let translation_matrix: mtx4_t = Matrices.make_translator(
+                mesh.translation[X], mesh.translation[Y], mesh.translation[Z]
+            );
+            let rotation_matrix_x: mtx4_t = Matrices.make_rotator_x(mesh.rotation[X]);
+            let rotation_matrix_y: mtx4_t = Matrices.make_rotator_y(mesh.rotation[Y]);
+            let rotation_matrix_z: mtx4_t = Matrices.make_rotator_z(mesh.rotation[Z]);
+            let world_matrix: mtx4_t = eye_m4d;
+            world_matrix = dot_m4d(world_matrix, scale_matrix);
+            world_matrix = dot_m4d(rotation_matrix_z, world_matrix);
+            world_matrix = dot_m4d(rotation_matrix_y, world_matrix);
+            world_matrix = dot_m4d(rotation_matrix_x, world_matrix);
+            world_matrix = dot_m4d(translation_matrix, world_matrix);
 
-    // 5. skip rendering triangle (i.e. cull) if angled too far away
-    if (dot_normal_camera < 0) { return true }
-    return false;
-}
+            for (let i = 0; i < mesh.faces.length; i++) {
+                let face: face_t = mesh.faces[i];
+                let v0: vec4_t = v3d_to_v4d(mesh.vertices[face.vertexIndices[0]]);
+                let v1: vec4_t = v3d_to_v4d(mesh.vertices[face.vertexIndices[1]]);
+                let v2: vec4_t = v3d_to_v4d(mesh.vertices[face.vertexIndices[2]]);
 
-/*--------------------------------------------------------------------------------------------------------------------*/
+                // apply transforms
+                let transformed_vertices: vec4_t[] = [v0, v1, v2];
+                transformed_vertices.forEach((vertex, index) => {
+                    let transformed_vertex: vec4_t = dot_m4d_v4d(world_matrix, vertex);
+                    transformed_vertex = dot_m4d_v4d(view_matrix, transformed_vertex);
+                    transformed_vertices[index] = transformed_vertex;
+                });
 
-let aspect_y = Renderer.canvas.height / Renderer.canvas.width;
-let aspect_x = Renderer.canvas.width / Renderer.canvas.height;
-let fov_y = 90 * (Math.PI / 180);
-let fov_x = 2.0 * Math.atan(Math.tan(fov_y / 2) * (aspect_x));
-let z_near = 0.1;
-let z_far = 10.0;
-let projection_matrix = Matrices.make_perspective(fov_y, aspect_y, z_near, z_far);
-let triangles: triangle_t[] = []
-let z_buffer: number[] = []
-Clipping.initFrustumPlanes(fov_x, fov_y, z_near, z_far);
-Camera.position = [0, 0, -8];
+                // culling
+                if (Renderer.cull_mode == true && Main.shouldCull(transformed_vertices)) { continue; }
 
-function update() {
+                // clipping
+                let polygon: polygon_t = Clipping.createPolygonFromTriangle(
+                    v4d_to_v3d(transformed_vertices[0]),
+                    v4d_to_v3d(transformed_vertices[1]),
+                    v4d_to_v3d(transformed_vertices[2]),
+                    face.colour,
+                );
 
-    // update the values on the mesh you want to transform here
-    if (auto_rotate) {
-        meshes.forEach(mesh => {
-            mesh.rotation[Y] += 0.01;
+                polygon = Clipping.clipPolygon(polygon);
+                let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
+
+                // projection
+                clipped_triangles.forEach(triangle => {
+                    let projected_vertices = Main.project(triangle.points);
+                    let triangle_to_render: triangle_t = {
+                        points: projected_vertices,
+                        colour: face.colour,
+                    };
+                    Main.triangles.push(triangle_to_render);
+                });
+            }
         });
     }
 
-    // update view matrix
-    let camera_target: vec3_t = Camera.getTarget();
-    let view_matrix: math.Matrix = Matrices.make_view(Camera.position, camera_target, Camera.up);
-
-    meshes.forEach(mesh => {
-        // mesh.translation[Z] = 3;
-
-        // update transform matrix
-        let scale_matrix: math.Matrix = Matrices.make_scaler(mesh.scale[X], mesh.scale[Y], mesh.scale[Z]);
-        let translation_matrix: math.Matrix = Matrices.make_translator(mesh.translation[X], mesh.translation[Y], mesh.translation[Z]);
-        let rotation_matrix_x: math.Matrix = Matrices.make_rotator_x(mesh.rotation[X]);
-        let rotation_matrix_y: math.Matrix = Matrices.make_rotator_y(mesh.rotation[Y]);
-        let rotation_matrix_z: math.Matrix = Matrices.make_rotator_z(mesh.rotation[Z]);
-        let world_matrix: math.Matrix = mathHelper.identity(4) as math.Matrix;
-        world_matrix = mathHelper.multiply(world_matrix, scale_matrix);
-        world_matrix = mathHelper.multiply(rotation_matrix_z, world_matrix);
-        world_matrix = mathHelper.multiply(rotation_matrix_y, world_matrix);
-        world_matrix = mathHelper.multiply(rotation_matrix_x, world_matrix);
-        world_matrix = mathHelper.multiply(translation_matrix, world_matrix);
-
-        // process every triangle in the mesh
-        for (let i = 0; i < mesh.faces.length; i++) {
-
-            // get the vectors into 4d
-            // note: a "face" in this context refers to an unprocessed triangle from the mesh
-            // whereas a "triangle" is one that has been transformed
-            let face: face_t = mesh.faces[i];
-            let v0: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[0]]);
-            let v1: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[1]]);
-            let v2: vec4_t = Vector.vec3_to_vec4(mesh.vertices[face.vertexIndices[2]]);
-
-            // apply transforms
-            let transformed_vertices: vec4_t[] = [v0, v1, v2];
-            transformed_vertices.forEach((vertex, index) => {
-                let transformed_vertex: vec4_t = mathHelper.multiply(world_matrix, vertex).valueOf() as vec4_t;
-                transformed_vertex = mathHelper.multiply(view_matrix, transformed_vertex).valueOf() as vec4_t;
-                transformed_vertices[index] = transformed_vertex;
-            });
-
-            // culling
-            if (Renderer.cull_mode == true && shouldCull(transformed_vertices)) { continue; }
-
-            // clipping
-            let polygon: polygon_t = Clipping.createPolygonFromTriangle(
-                Vector.vec4_to_vec3(transformed_vertices[0]),
-                Vector.vec4_to_vec3(transformed_vertices[1]),
-                Vector.vec4_to_vec3(transformed_vertices[2]),
-                face.colour
-            );
-            polygon = Clipping.clipPolygon(polygon);
-            let clipped_triangles: triangle_t[] = Clipping.trianglesFromPolygon(polygon);
-
-            // projection
-            clipped_triangles.forEach(triangle => {
-                let projected_vertices = project(triangle.points);
-                let triangle_to_render: triangle_t = {
-                    points: projected_vertices,
-                    colour: face.colour,
-                };
-                triangles.push(triangle_to_render);
-            })
-        }
-    });
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-function render() {
-    Renderer.clear();
-    Renderer.clearZBuffer();
-    triangles.forEach(triangle => {
-        Renderer.render(triangle);
-    });
-    Renderer.refresh();
-    triangles = [];
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-let ts = 0, ts_delta = 0, ts_old = 0;
-
-function mainloop(timestamp: number): void {
-    // get the time delta
-    ts = timestamp;
-    ts_delta = (ts - ts_old) / 1000;
-    ts_old = ts;
-
-    // handle input
-    Input.processInput(ts_delta);
-
-    // update
-    update();
-
-    // render
-    render();
-
-    requestAnimationFrame(mainloop);
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-let auto_rotate: boolean = false;
-document.addEventListener('keydown', Input.registerKeyDown);
-document.addEventListener('keyup', Input.registerKeyUp);
-
-Renderer.canvas.addEventListener('click', () => {
-    Renderer.canvas.requestPointerLock();
-});
-
-document.addEventListener('mousemove', (event) => {
-    if (document.pointerLockElement === Renderer.canvas) {
-        Input.handleMouseEvent(event, ts_delta);
+    private static render() {
+        Renderer.clear();
+        Renderer.clearZBuffer();
+        Main.triangles.forEach(triangle => {
+            Renderer.render(triangle);
+        });
+        Renderer.refresh();
+        Main.triangles = [];
     }
-});
 
-document.getElementById('btn-auto-on')!.addEventListener('click', () => { auto_rotate = true; });
-document.getElementById('btn-auto-off')!.addEventListener('click', () => { auto_rotate = false; });
-requestAnimationFrame(mainloop);
+    private static mainloop(timestamp: number): void {
+        Main.ts = timestamp;
+        Main.ts_delta = (Main.ts - Main.ts_old) / 1000;
+        Main.ts_old = Main.ts;
+
+        Input.processInput(Main.ts_delta);
+        Main.update();
+        Main.render();
+
+        requestAnimationFrame(Main.mainloop);
+    }
+
+    public static getDelta(): number {
+        return Main.ts_delta;
+    }
+
+    public static getCamera(): Camera {
+        return Main.camera;
+    }
+
+    public static run() {
+        document.addEventListener('keydown', Input.registerKeyDown);
+        document.addEventListener('keyup', Input.registerKeyUp);
+        Renderer.canvas.addEventListener('click', () => {
+            Renderer.canvas.requestPointerLock();
+        });
+        document.addEventListener('mousemove', (event) => {
+            if (document.pointerLockElement === Renderer.canvas) {
+                Input.handleMouseEvent(event, Main.getDelta());
+            }
+        });
+
+        Main.init();
+        requestAnimationFrame(Main.mainloop);
+    }
+}
+
+Main.run();
